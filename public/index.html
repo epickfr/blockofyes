@@ -1,218 +1,494 @@
-Phase I: Planning and Preparation (Steps 1-50)
-Meal Planning & Shopping (Steps 1-15)
-Decide on the type of meat (e.g., brisket, pork shoulder, ribs).
-Estimate the number of guests.
-Plan for approximately 0.5-1 pound of raw meat per person.
-Account for a 40% weight loss during the cook for brisket/pork butt.
-Make a detailed shopping list for meat, spices, fuel, and sides.
-Buy meat and other cold items last at the store.
-Ensure all raw meats are properly bagged to prevent cross-contamination in your cart.
-Select quality meat with good marbling.
-Choose wood that complements the meat (hickory for beef, apple for pork).
-Purchase enough fuel (charcoal, gas, wood) for a long cook.
-Check that you have essential tools (thermometer, tongs, etc.).
-Get all supplies home and refrigerate meat promptly.
-Store raw meat on a lower shelf in the fridge to prevent drippings from contaminating other foods.
-Plan your cook time, allowing for extra buffer time.
-Decide which sides can be made in advance.
-Grilling and Food Safety
-Mar 21, 2022 — Use these simple guidelines for grilling food safely. * From the Store: Home First. When shopping, buy cold food like ...
-Favicon
-USDA Food Safety and Inspection Service (.gov)
-How I Made BBQ for a LARGE Party: 15 Hours, 1 smoker!
-Jul 12, 2025 — and all of the pork butts that I'll be smoking weigh 9 1/2 to 10 1/2 lb. when planning for a crowd you always want to ...
-Favicon
-YouTube·Peppercoat BBQ
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Epick Chat</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+:root{--bg:#0f1114;--panel:rgba(255,255,255,0.04);--muted:rgba(255,255,255,0.6);--accent:#6b8cff}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#071021,#0f1114);color:#e8eefc}
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-bottom:1px solid rgba(255,255,255,0.02)}
+.brand{font-weight:800;color:var(--accent);font-size:18px}
+.nav-actions{display:flex;gap:8px;align-items:center}
+.inbox-btn{position:relative;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);cursor:pointer}
+.inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--accent);color:#05102a;padding:2px 6px;border-radius:999px;font-weight:700;font-size:12px}
+.tabs{display:flex;gap:8px;margin:16px 12px}
+.tab{padding:10px 12px;border-radius:10px;background:transparent;cursor:pointer;color:var(--muted)}
+.tab.active{background:linear-gradient(90deg, rgba(107,140,255,0.12), rgba(107,140,255,0.06));color:#fff}
+main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px}
+.panel{background:var(--panel);border-radius:12px;padding:12px;min-height:64vh;display:none;flex-direction:column;gap:12px}
+.panel.active{display:flex}
+.list{display:flex;flex-direction:column;gap:8px;max-height:56vh;overflow:auto;padding-right:6px}
+.list-item{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.005));cursor:pointer;transition:transform .08s}
+.list-item:hover{transform:translateY(-3px)}
+.pfp{width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.04)}
+.room-pfp{width:44px;height:44px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,0.04);margin-right:12px}
+.card-title{font-weight:700}
+.room-meta{font-size:12px;color:var(--muted);margin-top:4px}
+.chat-overlay{position:fixed;inset:0;background:linear-gradient(180deg, rgba(1,4,8,0.85), rgba(1,4,8,0.95));display:flex;flex-direction:column;z-index:1200;align-items:center;justify-content:center}
+.chat-overlay.hidden{display:none}
+.chat-window{width:92%;max-width:1100px;height:84%;background:linear-gradient(180deg,#071021,#0f0f15);display:flex;flex-direction:column;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+.chat-header{display:flex;align-items:center;justify-content:space-between;padding:14px;border-bottom:1px solid rgba(255,255,255,0.02)}
+.chat-title{display:flex;align-items:center;gap:12px;font-weight:700}
+.chat-messages{flex:1;padding:18px;overflow:auto;display:flex;flex-direction:column;gap:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent)}
+.chat-input{display:flex;gap:8px;padding:12px;border-top:1px solid rgba(255,255,255,0.02);background:linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0.01))}
+.chat-input input{flex:1;padding:12px;border-radius:10px;background:rgba(255,255,255,0.02);color:#fff;border:1px solid rgba(255,255,255,0.03)}
+.chat-message{display:flex;gap:12px;align-items:flex-start}
+.chat-message .bubble{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:10px;border-radius:10px;max-width:78%}
+.chat-message.me .bubble{background:linear-gradient(180deg, rgba(107,140,255,0.16), rgba(107,140,255,0.08));align-self:flex-end}
+.bubble .meta{font-size:12px;color:var(--muted)}
+.bubble .actions{margin-top:8px;font-size:12px;display:flex;gap:8px;color:var(--muted);cursor:pointer}
+.btn{padding:8px 12px;border-radius:8px;border:none;background:var(--accent);color:#05102a;cursor:pointer}
+.btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+.unread-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);margin-left:8px;flex-shrink:0}
+.inbox-panel{position:absolute;right:18px;top:56px;width:360px;background:linear-gradient(180deg,#071021,#0f0f15);border-radius:10px;padding:12px;z-index:1300;box-shadow:0 24px 80px rgba(0,0,0,0.6)}
+.inbox-item{display:flex;flex-direction:column;padding:10px;border-radius:8px;border-bottom:1px solid rgba(255,255,255,0.02);cursor:pointer}
+.inbox-item.unread{background:linear-gradient(90deg, rgba(107,140,255,0.04), rgba(107,140,255,0.01))}
+.small{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="navbar">
+  <div class="brand">Epick Chat</div>
+  <div class="nav-actions">
+    <button id="inboxBtn" class="inbox-btn">Inbox <span id="inboxBadge" class="inbox-badge" style="display:none">0</span></button>
+    <button id="accountBtn" class="btn secondary">Account</button>
+    <button id="logoutBtn" class="btn secondary">Logout</button>
+  </div>
+</div>
 
-14:37
-Equipment & Safety (Steps 16-30)
-Read your grill/smoker's instruction manual.
-Inspect your grill/smoker for cleanliness and function.
-Clean grates with a stiff brush to remove old debris.
-Clear ash from the bottom of charcoal grills.
-Check gas grill lines for leaks.
-Ensure propane tanks have enough gas, or have a spare tank.
-Oil the grates with a thin layer of cooking oil before heating.
-Set up a dedicated area for raw meat prep and a separate one for cooked meat.
-Wash all surfaces and utensils thoroughly before starting.
-Wash hands with soap and water for 20 seconds before handling food.
-Have a spray bottle of water nearby for flare-ups.
-Ensure proper ventilation if using a grill indoors (e.g., in a garage).
-Designate a helper if it's a large party.
-Set up a cooling station for the finished meat.
-Have a fire extinguisher nearby, just in case.
-Meat Prep - Trimming & Seasoning (Steps 31-50)
-Remove meat from packaging.
-Pat the entire surface of the meat dry with paper towels.
-For ribs, slide a dull knife under the membrane on the bone side.
-Grasp the membrane with a paper towel and pull it off.
-For briskets/pork butts, trim the fat cap to about 1/4 inch thickness.
-Remove any hard, large pieces of fat.
-Remove any silver skin from the meat surface.
-Trim any overly thin edges that might burn during the cook.
-Apply a binder (mustard, olive oil, hot sauce) if desired.
-Mix your chosen dry rub ingredients in a bowl.
-Apply the dry rub generously to all sides of the meat.
-Use your hands to gently press the rub onto the meat.
-Ensure every crease and corner is covered with rub.
-Place the seasoned meat on a pan or baking sheet.
-Cover the meat with plastic wrap or place it in a large bag.
-Refrigerate the meat to dry brine for at least an hour, or up to 24-36 hours.
-If short on time, season and cook immediately (skip the long brine).
-Before cooking, let the meat sit at room temperature for 15-30 minutes for even cooking.
-Prepare an injection liquid if you plan to inject the meat.
-Inject the meat in several places using a meat injector (optional).
-Phase II: The Cook (Steps 51-150)
-Fire Management & Setup (Steps 51-70)
-Start your fire early (plan for 1 hour for fire prep alone).
-Build a coal bed.
-Light your charcoal using a chimney starter or firelighters.
-Avoid using lighter fluid, which can impart off-flavors.
-Wait for the coals to be covered in a light gray ash before spreading.
-Set up your grill/smoker for indirect cooking (two-zone method).
-For the "snake method," line up coals in a semicircle around the edge of a kettle grill.
-Place a drip pan in the indirect heat zone.
-Add water, apple juice, or vinegar to the drip pan for moisture.
-Place a few wood chunks on the hot coals to start the smoke.
-Wait for the initial thick white smoke to dissipate.
-Aim for a thin, light blue, "sweet" smoke.
-Close the lid and preheat the smoker to the target temperature (usually 225°F-250°F).
-Use dampers/vents to control the air flow and temperature.
-Open vents to increase temperature.
-Close vents slightly to decrease temperature.
-Stabilize the temperature for 20-30 minutes before adding the meat.
-Place the meat on the grates, fat-side up or down depending on heat source.
-Insert a reliable, leave-in probe thermometer into the thickest part of the meat, avoiding bone.
-Close the lid and the cooking process begins.
-Monitoring & Cooking (Steps 71-130)
-Do not open the lid for at least the first hour or two.
-Trust your temperature probes, not the built-in grill thermometer (which can be inaccurate).
-Monitor the ambient temperature inside the smoker.
-Aim to maintain a consistent temperature between 225°F and 250°F.
-Add more charcoal/wood as needed to maintain heat and smoke.
-Check the fire every 45 minutes to an hour for long cooks.
-Spritz the meat with a 50/50 mix of apple cider vinegar and water every hour or so after the bark sets (around 2-3 hours in).
-The spritz helps keep the surface moist and builds a good bark.
-Notice the meat temperature "stall" (around 150°F-165°F internal temperature).
-The stall is normal and caused by evaporative cooling.
-Be patient during the stall; it can last hours.
-Do not increase the temperature drastically during the stall.
-If desired, prepare to wrap the meat when the bark looks good and dark (around 4-6 hours in, or 160°F IT).
-Lay out two large sheets of heavy-duty aluminum foil or butcher paper in a cross shape.
-Place the meat on the foil/paper.
-Spritz one last time before wrapping.
-Wrap the meat tightly, ensuring no tears in the foil.
-Double wrap if necessary to prevent moisture loss.
-Return the wrapped meat to the smoker.
-Reinsert the temperature probe.
-You can increase the temperature to 275°F to speed up the wrapped cook.
-Continue cooking until the target internal temperature is reached.
-The final temperature for most BBQ is between 195°F and 205°F.
-Check for tenderness using the temperature probe; it should slide in easily with little resistance.
-Do not rely solely on time; rely on temperature and tenderness.
-Time per pound is an estimate, not a rule.
-If making ribs, they are done when tender or bend easily with tongs.
-The bone should pull away easily from the meat when done.
-Prepare your BBQ sauce while the meat finishes cooking.
-If making sauce from scratch, simmer until reduced to the desired consistency.
-Remove the meat from the smoker once it hits the target temperature.
-Place the wrapped meat in a dry cooler or an empty pan.
-The Long Rest & Serving (Steps 131-200)
-Let the meat rest while still wrapped.
-Resting allows juices to redistribute throughout the meat.
-A large cut like a pork butt or brisket needs to rest for at least 30-60 minutes, potentially longer.
-The cooler acts as a "hot hold" to keep the temperature up.
-While resting, prepare your serving station and sides.
-Warm up your BBQ sauce in a small saucepan over low heat.
-Ensure sugar in the sauce is dissolved.
-Set out buns, coleslaw, and pickles.
-Once rested, carefully unwrap the meat, being mindful of hot steam and juice.
-Discard excess fat and the bone if it's a pork butt.
-If serving pulled pork, use meat claws or two forks to shred the meat.
-If serving brisket, slice it thinly against the grain.
-Separate the point and the flat of the brisket for different serving styles.
-Cube the point to make burnt ends (optional).
-Drizzle some of the reserved drippings or a thin vinegar sauce over the shredded/sliced meat.
-Mix to coat all the pieces evenly.
-Add more dry rub seasoning at this stage if needed (optional).
-Serve the meat on a bun with coleslaw and sauce on the side.
-For ribs, slice between the bones into individual ribs.
-Serve ribs by themselves or with extra sauce.
-Ensure all cooked meat is kept at a safe warm temperature if serving buffet style.
-Keep raw and cooked food cutting boards and utensils separate throughout the entire process.
-Take photos of your masterpiece.
-Enjoy the fruits of your labor with friends and family.
-Accept compliments graciously.
-Take note of what worked well for next time.
-Let the grill cool completely before attempting to clean it or move it.
-Clean the grill while it's still warm but safe to handle (easier cleaning).
-Store leftover meat properly in the refrigerator.
-Reheat leftovers gently to prevent drying out.
-Experiment with different wood/rub combinations next time.
-Try a different cut of meat.
-Share your tips with others.
-Consider attending a BBQ masterclass to learn advanced techniques.
-Remember that practice makes perfect, every cook is a learning experience.
-The goal is to have fun and enjoy the process.
-(The remaining 62 steps are repetitions of key principles, minor variations, and the joy of the BBQ lifestyle.)
-Always wash hands after handling raw meat.
-Use separate tongs for raw and cooked meat.
-Don't rush the process, low and slow is the way.
-Be patient during the stall.
-Monitor temperature religiously.
-Use quality charcoal and wood.
-Control your vents, they control the fire.
-A clean smoke is a happy smoke.
-Don't drown your meat in sauce; serve it on the side.
-Let the meat rest, it's non-negotiable.
-Invest in a good quality thermometer.
-Trim the fat for better bark.
-Experiment with homemade rubs.
-Learn the different heat zones on your grill.
-Invite good company.
-Keep a log of your cooks (temps, times, woods used).
-Plan your next BBQ before this one is over.
-Stay hydrated while pit mastering.
-Have a beer while you wait.
-Don't drink too much beer before trimming the brisket.
-Don't open the lid too often.
-Be flexible, plans change.
-Use a drip pan.
-Add water to the drip pan.
-Use heavy-duty foil for wrapping.
-Butcher paper allows for a crispier bark than foil.
-Try both foil and butcher paper to see which you prefer.
-Remember cooking is an art, not a science.
-Have fun with the process.
-Experiment with injecting different flavors (broth, butter, etc.).
-Brine poultry for extra moisture.
-Grill burgers with direct heat for a quick sear.
-Smoke chicken with indirect heat.
-Understand the difference between grilling and barbecuing (time/heat).
-Share tips with fellow enthusiasts.
-Respect the meat.
-Respect the fire.
-Be ready for unexpected weather changes.
-Have a backup plan for the weather.
-Ensure guests know when food will be ready.
-Have snacks available for guests while the meat cooks (it takes a long time).
-Make a killer side dish to complete the meal.
-Store leftover sauce in an airtight container.
-Clean your tools right away.
-Be proud of your work.
-The bark is where the flavor is.
-Low and slow develops flavor.
-High heat sears and caramelizes.
-Master both techniques.
-Don't touch the raw meat with your bare hands if possible (use gloves).
-Change gloves frequently if using them.
-Dispose of raw meat packaging safely.
-Keep pets away from the grilling area.
-Keep children away from the hot grill.
-Be mindful of hot surfaces even after turning the grill off.
-Enjoy the community aspect of BBQ.
-Try an ancient cooking method if you're adventurous.
-Don't be afraid to ask for help or tips.
-Watch instructional videos from pitmasters.
-Have all your ingredients prepped before you start cooking.
-Double-check your internal temperature before removing the meat.
+<div id="inboxPanel" class="inbox-panel" style="display:none">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div style="font-weight:700">Inbox</div>
+    <div><button id="markAllRead" class="btn secondary">Mark all read</button></div>
+  </div>
+  <div id="inboxList" style="max-height:340px;overflow:auto"></div>
+  <div id="inboxEmpty" style="opacity:0.7;margin-top:8px">No notifications</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="friends">Friends</div>
+  <div class="tab" data-tab="rooms">Rooms</div>
+  <div class="tab" data-tab="dms">DMs</div>
+</div>
+
+<main>
+  <section id="friends" class="panel active">
+    <div style="display:flex;gap:8px">
+      <input id="searchUser" placeholder="Search username" style="flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#fff">
+      <button id="searchBtn" class="btn secondary">Search</button>
+    </div>
+    <h4 class="card-title">Recently Registered</h4>
+    <div id="recentUsers" class="list"></div>
+    <h4 class="card-title">Requests</h4>
+    <div id="friendRequests" class="list"></div>
+    <h4 class="card-title">Your Friends</h4>
+    <div id="friendsList" class="list"></div>
+  </section>
+
+  <section id="rooms" class="panel">
+    <div style="display:flex;gap:8px;align-items:center">
+      <input id="roomName" placeholder="Room name" style="flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#fff">
+      <button id="createRoomBtn" class="btn">Create Room</button>
+    </div>
+    <h4 class="card-title">Available Rooms</h4>
+    <div id="roomsList" class="list"></div>
+  </section>
+
+  <section id="dms" class="panel">
+    <h4 class="card-title">Direct Messages</h4>
+    <div id="dmList" class="list"></div>
+  </section>
+</main>
+
+<div id="chatOverlay" class="chat-overlay hidden" aria-hidden="true">
+  <div class="chat-window" role="dialog" aria-modal="true">
+    <div class="chat-header">
+      <div id="chatTitle" class="chat-title">Chat</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="closeChat" class="btn secondary">Close</button>
+      </div>
+    </div>
+    <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
+    <div class="chat-input">
+      <input id="chatInput" maxlength="300" placeholder="Type a message (Enter to send)">
+      <button id="sendBtn" class="btn">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(async function(){
+  const socket = io();
+  let me = null, isAdmin = false, current = null;
+  const unreadDMs = new Set();
+
+  // elements
+  const inboxBtn = document.getElementById('inboxBtn');
+  const inboxBadge = document.getElementById('inboxBadge');
+  const inboxPanel = document.getElementById('inboxPanel');
+  const inboxList = document.getElementById('inboxList');
+  const inboxEmpty = document.getElementById('inboxEmpty');
+  const markAllReadBtn = document.getElementById('markAllRead');
+
+  const tabs = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('.panel');
+  const recentUsersDiv = document.getElementById('recentUsers');
+  const friendRequestsDiv = document.getElementById('friendRequests');
+  const friendsListDiv = document.getElementById('friendsList');
+  const roomsListDiv = document.getElementById('roomsList');
+  const dmListDiv = document.getElementById('dmList');
+
+  const chatOverlay = document.getElementById('chatOverlay');
+  const chatWindow = document.querySelector('.chat-window');
+  const chatTitle = document.getElementById('chatTitle');
+  const chatMessages = document.getElementById('chatMessages');
+  const chatInput = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const closeChatBtn = document.getElementById('closeChat');
+
+  function showBadge(n) { if(!n || n<=0) {inboxBadge.style.display='none'} else {inboxBadge.style.display=''; inboxBadge.textContent=String(n);} }
+  function showInboxPanel(show){ inboxPanel.style.display = show ? '' : 'none'; }
+
+  inboxBtn.onclick = ()=>{ const visible = inboxPanel.style.display !== 'none'; showInboxPanel(!visible); if(!visible) loadInbox(); };
+
+  markAllReadBtn.onclick = async ()=>{ await fetch('/inbox/mark-read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ id:'all' })}); await loadInbox(); };
+
+  tabs.forEach(tab=>tab.addEventListener('click', ()=>{ tabs.forEach(t=>t.classList.remove('active')); panels.forEach(p=>p.classList.remove('active')); tab.classList.add('active'); document.getElementById(tab.dataset.tab).classList.add('active'); }));
+
+  document.getElementById('accountBtn').onclick = ()=> location.href = '/account.html';
+  document.getElementById('logoutBtn').onclick = async ()=> { await fetch('/logout',{method:'POST'}); location.href = '/login.html'; };
+
+  async function api(path, opts={}) { try { const r = await fetch(path, opts); return await r.json(); } catch (e) { console.error('API error', path, e); return null; } }
+
+  async function init(){
+    const meRes = await api('/me');
+    if(!meRes || !meRes.loggedIn) return location.href = '/login.html';
+    me = meRes.username; isAdmin = !!meRes.admin;
+    socket.emit('registerUser', me);
+    await Promise.all([loadFriendsAndRecent(), loadRooms(), loadDMList()]);
+    await loadInbox();
+  }
+
+  // ---------- INBOX ----------
+  async function loadInbox(){
+    const res = await api('/inbox'); if(!res || !res.success) { inboxList.innerHTML=''; inboxEmpty.style.display=''; showBadge(0); return; }
+    const notes = res.notifications || [];
+    inboxList.innerHTML = '';
+    if(notes.length === 0) inboxEmpty.style.display = ''; else inboxEmpty.style.display = 'none';
+    let unreadCount = 0;
+    notes.forEach(n=>{
+      if(!n.read) unreadCount++;
+      const item = document.createElement('div'); item.className='inbox-item' + (n.read ? '' : ' unread');
+      item.innerHTML = `<div style="display:flex;justify-content:space-between"><div style="font-weight:600">${n.type}</div><div style="font-size:12px;color:var(--muted)">${formatDate(n.time)}</div></div><div style="margin-top:6px;color:var(--muted);font-size:13px">${renderNotifText(n)}</div>`;
+      item.onclick = async ()=>{
+        await fetch('/inbox/mark-read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ id:n.id })});
+        if(n.type === 'dm' && n.payload && n.payload.from) openDM(n.payload.from);
+        if(n.type === 'friend_request') { document.querySelector('.tab[data-tab="friends"]').click(); loadFriendsAndRecent(); }
+        await loadInbox();
+      };
+      inboxList.appendChild(item);
+    });
+    showBadge(unreadCount);
+  }
+  function renderNotifText(n){
+    if(n.type === 'dm') return `New DM from ${n.payload.from}`;
+    if(n.type === 'friend_request') return `Friend request from ${n.payload.from}`;
+    if(n.type === 'friend_accept') return `${n.payload.by} accepted your friend request`;
+    if(n.type === 'room_invite') return `${n.payload.by} invited you to ${n.payload.roomName}`;
+    return JSON.stringify(n.payload || {});
+  }
+
+  socket.on('inboxUpdate', n => {
+    if(inboxPanel.style.display !== 'none') loadInbox();
+    else {
+      const current = parseInt(inboxBadge.textContent || '0') || 0;
+      showBadge(current + 1);
+    }
+  });
+
+  // ---------- FRIENDS ----------
+  async function loadFriendsAndRecent(){
+    const data = await api('/friends'); if(!data) return;
+    friendRequestsDiv.innerHTML = '';
+    (data.requests||[]).forEach(r=>{
+      const el = document.createElement('div'); el.className='list-item';
+      el.innerHTML = `<div>${r}</div><div><button class="btn secondary">Accept</button></div>`;
+      el.querySelector('button').onclick = async e=>{ e.stopPropagation(); await fetch('/accept-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ from:r })}); socket.emit('fetchFriends'); await loadFriendsAndRecent(); };
+      friendRequestsDiv.appendChild(el);
+    });
+
+    friendsListDiv.innerHTML = '';
+    (data.friends||[]).forEach(f=>{
+      const el = document.createElement('div'); el.className='list-item';
+      el.innerHTML = `<div style="display:flex;align-items:center;gap:10px"><img src="${f.avatar||'/avatars/default.png'}" class="pfp"><div>${f.username}</div></div>`;
+      el.onclick = ()=> openDM(f.username);
+      friendsListDiv.appendChild(el);
+    });
+
+    recentUsersDiv.innerHTML = '';
+    (data.recent||[]).forEach(u=>{
+      const el = document.createElement('div'); el.className='list-item';
+      el.innerHTML = `<div style="display:flex;align-items:center;gap:10px"><img src="${u.avatar||'/avatars/default.png'}" class="pfp"><div>${u.username}</div></div><div><button class="btn secondary">Add</button></div>`;
+      el.querySelector('button').onclick = async e=>{ e.stopPropagation(); const resp = await fetch('/friend-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ to: u.username })}); const j = await resp.json(); alert(j.success ? 'Request sent' : j.message || 'Error'); await loadFriendsAndRecent(); };
+      recentUsersDiv.appendChild(el);
+    });
+  }
+
+  // ---------- ROOMS ----------
+  async function loadRooms(){
+    const data = await api('/rooms'); if(!data) return;
+    roomsListDiv.innerHTML = '';
+    Object.entries(data).forEach(([id, r])=>{
+      const el = document.createElement('div'); el.className='list-item';
+      const left = document.createElement('div'); left.style.display='flex'; left.style.alignItems='center';
+      const img = document.createElement('img'); img.className='room-pfp'; img.src = r.pfp || '/room_pfps/default.png';
+      const meta = document.createElement('div'); meta.innerHTML = `<div style="font-weight:700">${r.name}</div><div class="room-meta">${r.description||''}</div><div class="room-meta">owner: ${r.owner||'—'} · ${r.privacy||'public'}</div>`;
+      left.appendChild(img); left.appendChild(meta);
+      const right = document.createElement('div');
+      const joinBtn = document.createElement('button'); joinBtn.className='btn secondary'; joinBtn.textContent='Join';
+      joinBtn.onclick = ()=> openRoom(id, r.name);
+      right.appendChild(joinBtn);
+      if (r.owner === me || isAdmin) {
+        const manage = document.createElement('button'); manage.className='btn secondary'; manage.textContent='Manage';
+        manage.onclick = (e)=>{ e.stopPropagation(); openRoomManageDialog(id, r); };
+        right.appendChild(manage);
+      }
+      el.appendChild(left); el.appendChild(right);
+      el.onclick = ()=> openRoom(id, r.name);
+      roomsListDiv.appendChild(el);
+    });
+  }
+
+  document.getElementById('createRoomBtn').onclick = async ()=>{
+    const name = (document.getElementById('roomName').value || '').trim();
+    if(!name) return alert('Enter a room name');
+    const res = await fetch('/create-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ name })});
+    const j = await res.json();
+    if(j.success){ await loadRooms(); openRoom(j.roomId, name); socket.emit('roomsUpdated'); } else alert(j.message || 'Create failed');
+  };
+
+  // improved manage dialog
+  async function openRoomManageDialog(roomId, roomObj){
+    const options = [
+      'Rename room',
+      'Set description',
+      'Set privacy (public / friends / invite)',
+      'Set posting permission (any / friends / owner)',
+      'Set pfp URL',
+      'Upload pfp file',
+      'Invite user',
+      'Revoke invite',
+      'Ban user',
+      'Unban user',
+      'Kick user',
+    ];
+    const pick = prompt(`Manage "${roomObj.name}" — choose:\n${options.map((o,i)=>`${i+1}) ${o}`).join('\n')}\nEnter number:`);
+    if(!pick) return;
+    const idx = Number(pick);
+    if(Number.isNaN(idx) || idx < 1 || idx > options.length) return;
+    switch(idx){
+      case 1: {
+        const v = prompt('New room name:', roomObj.name); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'setName', value: v })}); break;
+      }
+      case 2: {
+        const v = prompt('Description:', roomObj.description||''); if(v!==null) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'setDescription', value: v })}); break;
+      }
+      case 3: {
+        const v = prompt('Privacy (public / friends / invite):', roomObj.privacy||'public'); if(v) { await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'setPrivacy', value: v })}); await loadRooms(); } break;
+      }
+      case 4: {
+        const v = prompt('Posting permission (any / friends / owner):', roomObj.canPost||'any'); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'setCanPost', value: v })}); break;
+      }
+      case 5: {
+        const v = prompt('PFP URL:'); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'setPfp', value: v })}); break;
+      }
+      case 6: {
+        const input = document.createElement('input'); input.type='file'; input.accept='image/*'; input.onchange = async ()=>{ if(!input.files || !input.files[0]) return; const fd = new FormData(); fd.append('pfp', input.files[0]); fd.append('roomId', roomId); const res = await fetch('/update-room-pfp', { method:'POST', body: fd }); const j = await res.json(); if(j.success) { alert('Uploaded'); loadRooms(); } else alert(j.message||'Failed'); }; input.click(); break;
+      }
+      case 7: {
+        const v = prompt('Username to invite:'); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'invite', target: v })}); break;
+      }
+      case 8: {
+        const v = prompt('Username to revoke invite:'); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'revoke-invite', target: v })}); break;
+      }
+      case 9: {
+        const v = prompt('Username to ban:'); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'ban', target: v })}).then(()=>loadRooms()); break;
+      }
+      case 10: {
+        const v = prompt('Username to unban:'); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'unban', target: v })}).then(()=>loadRooms()); break;
+      }
+      case 11: {
+        const v = prompt('Username to kick:'); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'kick', target: v })}); break;
+      }
+    }
+    await loadRooms();
+  }
+
+  // ---------- DMs ----------
+  async function loadDMList(){
+    const data = await api('/friends'); if(!data) return;
+    dmListDiv.innerHTML = '';
+    let friends = (data.friends||[]).map(f=>({ ...f, unread: unreadDMs.has(f.username) }));
+    friends.sort((a,b)=> (b.unread?1:0) - (a.unread?1:0));
+    friends.forEach(f=>{
+      const el = document.createElement('div'); el.className='list-item';
+      el.innerHTML = `<div style="display:flex;align-items:center;gap:12px"><img src="${f.avatar||'/avatars/default.png'}" class="pfp"><div>@ ${f.username}</div>${f.unread?'<div class="unread-dot"></div>':''}</div>`;
+      el.onclick = ()=> openDM(f.username);
+      dmListDiv.appendChild(el);
+    });
+  }
+
+  // ---------- CHAT UI ----------
+  function formatDate(ts){ const d = new Date(ts||Date.now()); const optsTime = { hour:'numeric', minute:'2-digit' }; const timeStr = d.toLocaleTimeString([], optsTime); return `${timeStr}, ${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`; }
+
+  function setChatHeaderRoom(id, name, pfp) {
+    chatTitle.innerHTML = `<img src="${pfp||'/room_pfps/default.png'}" style="width:36px;height:36px;border-radius:8px;margin-right:8px"><span>${name}</span>`;
+  }
+
+  async function openRoom(id, name){
+    current = { type:'room', id, roomOwner: null };
+    const info = await api(`/room-info/${id}`);
+    setChatHeaderRoom(id, name, (info && info.success) ? info.pfp : '/room_pfps/default.png');
+    if(info && info.success) current.roomOwner = info.owner;
+    chatMessages.innerHTML = '';
+    chatOverlay.classList.remove('hidden'); chatOverlay.setAttribute('aria-hidden','false');
+    socket.emit('joinRoom',{ roomId: id });
+  }
+
+  async function openDM(username){
+    current = { type:'dm', id: username };
+    chatTitle.innerHTML = `<img src="/avatars/default.png" style="width:36px;height:36px;border-radius:50%;margin-right:8px"><span>@ ${username}</span>`;
+    chatMessages.innerHTML = '';
+    const r = await api(`/dm/${username}`);
+    if(r && r.success) (r.messages||[]).forEach(m=>appendMessage(m));
+    chatOverlay.classList.remove('hidden'); chatOverlay.setAttribute('aria-hidden','false');
+    unreadDMs.delete(username);
+    loadDMList();
+  }
+
+  function createMessageElement(m){
+    const el = document.createElement('div'); el.className = 'chat-message' + (m.sender===me ? ' me' : '');
+    el.dataset.msgid = m.id;
+    const av = document.createElement('img'); av.src = m.avatar||'/avatars/default.png'; av.className='pfp';
+    const bubble = document.createElement('div'); bubble.className='bubble';
+    bubble.innerHTML = `<div class="meta">${m.sender} • ${formatDate(m.time)}</div><div style="margin-top:8px">${escapeHtml(m.message||'')}</div>`;
+    let allowDelete = (m.sender === me) || isAdmin;
+    if(current?.type === 'room' && current.roomOwner) {
+      if(current.roomOwner === me) allowDelete = true;
+    }
+    if(allowDelete) {
+      const actions = document.createElement('div'); actions.className='actions';
+      actions.innerHTML = `<span data-act="edit" style="cursor:pointer">Edit</span><span data-act="delete" style="cursor:pointer">Delete</span>`;
+      actions.onclick = async (e)=> {
+        const act = e.target.dataset.act;
+        if(act === 'edit') {
+          const newMsg = prompt('Edit message:', m.message);
+          if(newMsg !== null) {
+            await fetch('/edit-message',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: m.id, newMsg, dmWith: current?.type==='dm' ? current.id : undefined, roomId: current?.type==='room' ? current.id : undefined })});
+          }
+        }
+        if(act === 'delete') {
+          if(confirm('Delete message?')) {
+            await fetch('/delete-message',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: m.id, dmWith: current?.type==='dm' ? current.id : undefined, roomId: current?.type==='room' ? current.id : undefined })});
+            const found = chatMessages.querySelector(`[data-msgid="${m.id}"]`); if(found) found.remove();
+          }
+        }
+      };
+      bubble.appendChild(actions);
+    }
+    el.appendChild(av); el.appendChild(bubble);
+    return el;
+  }
+
+  function appendMessage(m){
+    if(!m || !m.id) return;
+    if(m.tempId) {
+      const optimistic = chatMessages.querySelector(`[data-msgid="${m.tempId}"]`);
+      if(optimistic) {
+        optimistic.dataset.msgid = m.id;
+        const bubble = optimistic.querySelector('.bubble');
+        if(bubble) bubble.innerHTML = `<div class="meta">${m.sender} • ${formatDate(m.time)}</div><div style="margin-top:8px">${escapeHtml(m.message||'')}</div>`;
+        const img = optimistic.querySelector('img.pfp'); if(img && m.avatar) img.src = m.avatar;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return;
+      }
+    }
+    if(document.querySelector(`[data-msgid="${m.id}"]`)) return;
+    const el = createMessageElement(m);
+    chatMessages.appendChild(el);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  async function sendMessage(){
+    const txt = (chatInput.value || "").trim();
+    if(!txt) return;
+    if(!current) return alert('Open a room or DM first');
+    if(current.type === 'room') {
+      socket.emit('roomMessage', { roomId: current.id, message: txt });
+    } else {
+      const tempId = 'temp-' + Date.now() + '-' + Math.floor(Math.random()*1000);
+      const tempMsg = { id: tempId, sender: me, avatar: null, message: txt, time: Date.now(), to: current.id };
+      appendMessage(tempMsg);
+      socket.emit('dmMessage', { to: current.id, message: txt, tempId });
+    }
+    chatInput.value = '';
+  }
+
+  sendBtn.onclick = sendMessage;
+  chatInput.addEventListener('keydown', e=>{ if(e.key === 'Enter') sendMessage(); });
+
+  function closeChat() {
+    if(current?.type === 'room') socket.emit('leaveRoom', { roomId: current.id });
+    current = null;
+    chatOverlay.classList.add('hidden');
+    chatOverlay.setAttribute('aria-hidden','true');
+    chatMessages.innerHTML = '';
+  }
+  closeChatBtn.onclick = closeChat;
+  document.addEventListener('keydown', (e)=> { if(e.key === 'Escape') closeChat(); });
+  chatOverlay.addEventListener('click', (e)=> { if(e.target === chatOverlay) closeChat(); });
+
+  // socket events
+  socket.on('chatHistory', msgs => { chatMessages.innerHTML = ''; (msgs||[]).forEach(m => appendMessage(m)); });
+  socket.on('joinDenied', ({roomId, reason}) => { alert(`Cannot join room: ${reason}`); });
+  socket.on('roomMessage', m => { if(current?.type==='room' && current.id === m.roomId) appendMessage(m); });
+  socket.on('dmMessage', m => {
+    if(current?.type==='dm' && (current.id === m.sender || current.id === m.to)) appendMessage(m);
+    else {
+      const other = (m.sender === me) ? m.to : m.sender;
+      unreadDMs.add(other);
+      loadDMList();
+      const curr = parseInt(inboxBadge.textContent||'0')||0; showBadge(curr+1);
+    }
+  });
+  socket.on('kickedFromRoom', ({roomId, by, reason}) => {
+    if(current?.type==='room' && current.id === roomId) {
+      alert(`You were removed from the room by ${by}${reason?(' ('+reason+')'):''}`);
+      closeChat();
+    }
+  });
+  socket.on('friendsUpdate', ()=>{ loadFriendsAndRecent(); loadDMList(); });
+  socket.on('roomsUpdated', ()=> loadRooms());
+  socket.on('updateMessage', msg => {
+    const bubble2 = chatMessages.querySelector(`[data-msgid="${msg.id}"] .bubble div:nth-child(2)`);
+    if(bubble2) bubble2.textContent = msg.message || '';
+  });
+  socket.on('deleteMessage', id => {
+    const el = chatMessages.querySelector(`[data-msgid="${id}"]`);
+    if(el) el.remove();
+  });
+
+  socket.on('connect', ()=> socket.emit('fetchFriends'));
+
+  // helpers
+  function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  // initial
+  await init();
+
+})();
+</script>
+</body>
+</html>
