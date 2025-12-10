@@ -275,6 +275,12 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
         manage.onclick = (e)=>{ e.stopPropagation(); openRoomManageDialog(id, r); };
         right.appendChild(manage);
       }
+      const meta = document.createElement('div'); 
+      meta.innerHTML = `
+        <div style="font-weight:700">${r.name}</div>
+        <div class="room-meta">${r.description||''}</div>
+        <div class="room-meta">owner: ${r.owner ? getUsernameWithBadge(r.owner) : '—'} · ${r.privacy||'public'}</div>
+      `;
       el.appendChild(left); el.appendChild(right);
       el.onclick = ()=> openRoom(id, r.name);
       roomsListDiv.appendChild(el);
