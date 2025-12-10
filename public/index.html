@@ -259,7 +259,88 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       recentUsersDiv.appendChild(el);
     });
   }
+// === ADMIN PANEL ===
+const adminTab = document.getElementById('adminTab');
+const adminPanel = document.getElementById('admin');
 
+async function loadAdminPanel() {
+  if (!isAdmin) return;
+  
+  adminTab.style.display = 'block';
+  
+  // Load users
+  const users = Object.values(store.users || {}).sort((a,b) => a.username.localeCompare(b.username));
+  const list = document.getElementById('adminUsersList');
+  list.innerHTML = '';
+  users.forEach(u => {
+    const banned = u.banned ? ' (BANNED)' : '';
+    const el = document.createElement('div');
+    el.className = 'list-item';
+    el.innerHTML = `
+      <div style="flex:1">
+        <div style="font-weight:600">${escapeHtml(u.username)}${banned}</div>
+        <div style="font-size:12px;opacity:0.7">${u.displayName || ''}</div>
+      </div>
+      <div>
+        ${u.banned ? 
+          `<button class="btn secondary" onclick="unbanUser('${u.username}')">Unban</button>` :
+          `<button class="btn" style="background:#ff4444" onclick="banUser('${u.username}')">Ban</button>`
+        }
+      </div>
+    `;
+    list.appendChild(el);
+  });
+  
+  // Load rooms
+  const roomsList = document.getElementById('adminRoomsList');
+  roomsList.innerHTML = '';
+  Object.entries(store.rooms || {}).forEach(([id, r]) => {
+    const el = document.createElement('div');
+    el.className = 'list-item';
+    el.innerHTML = `
+      <div style="flex:1">
+        <strong>${escapeHtml(r.name)}</strong><br>
+        <small>Owner: ${r.owner || 'none'} • ${r.messages ? r.messages.length : 0} msgs</small>
+      </div>
+      <button class="btn" style="background:#ff4444;font-size:11px" onclick="deleteRoom('${id}')">Delete</button>
+    `;
+    roomsList.appendChild(el);
+  });
+}
+
+// Admin actions
+window.banUser = async (username) => {
+  if (!confirm(`Ban ${username} permanently?`)) return;
+  await fetch('/admin/ban', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user:username})});
+  alert(`${username} banned`);
+  loadAdminPanel();
+};
+window.unbanUser = async (username) => {
+  await fetch('/admin/unban', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user:username})});
+  alert(`${username} unbanned`);
+  loadAdminPanel();
+};
+window.deleteRoom = async (roomId) => {
+  if (!confirm('Delete this room and ALL its messages forever?')) return;
+  await fetch('/admin/delete-room', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId})});
+  alert('Room deleted');
+  loadAdminPanel();
+};
+
+document.getElementById('nukeAllMessages').onclick = async () => {
+  if (!confirm('DELETE EVERY SINGLE MESSAGE ON THE SERVER? This cannot be undone.')) return;
+  if (!confirm('Type "NUKE" to confirm')) return;
+  if (prompt('Final confirmation: type "NUKE EVERYTHING"') !== 'NUKE EVERYTHING') return;
+  await fetch('/admin/nuke-messages', {method:'POST'});
+  alert('All messages deleted globally');
+};
+document.getElementById('wipeData').onclick = async () => {
+  if (!confirm('DELETE EVERYTHING? Users, messages, rooms — GONE FOREVER.')) return;
+  if (prompt('Type "WIPE SERVER" to confirm') !== 'WIPE SERVER') return;
+  await fetch('/admin/wipe', {method:'POST'});
+  alert('Server wiped. Reloading...');
+  setTimeout(() => location.reload(), 2000);
+};
   // ---------- ROOMS ----------
   async function loadRooms(){
     const data = await api('/rooms'); if(!data) return;
