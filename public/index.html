@@ -189,7 +189,15 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
   async function init(){
     const meRes = await api('/me');
     if(!meRes || !meRes.loggedIn) return location.href = '/login.html';
-    me = meRes.username; isAdmin = !!meRes.admin;
+    me = meRes.username; 
+    isAdmin = !!meRes.admin;
+  
+    // THIS IS THE FIX — shows the Admin tab immediately
+    if (isAdmin) {
+      document.getElementById('adminTab').style.display = 'block';
+      loadAdminPanel();   // This loads the user/room lists too
+    }
+  
     socket.emit('registerUser', me);
     await Promise.all([loadFriendsAndRecent(), loadRooms(), loadDMList()]);
     await loadInbox();
