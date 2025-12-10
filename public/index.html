@@ -344,7 +344,12 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       dmListDiv.appendChild(el);
     });
   }
-
+  function getUsernameWithBadge(username) {
+    if (store.users[username]?.admin) {
+      return `${escapeHtml(username)} <img src="https://cdn3.emoji.gg/emojis/1856-admin-badge.png" class="admin-badge" title="Administrator">`;
+    }
+    return escapeHtml(username);
+  }
   // ---------- CHAT UI ----------
   function formatDate(ts){ const d = new Date(ts||Date.now()); const optsTime = { hour:'numeric', minute:'2-digit' }; const timeStr = d.toLocaleTimeString([], optsTime); return `${timeStr}, ${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`; }
 
