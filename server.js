@@ -538,5 +538,3 @@ httpServer.listen(PORT, () => {
   console.log(`Epick Chat running on: ${PORT}`);
   console.log(`Backup password: ${ADMIN_BACKUP_PASSWORD}`);
 });
-const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, ()=>console.log(`Server running on port ${PORT}`));
