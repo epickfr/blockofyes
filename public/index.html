@@ -98,7 +98,34 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     <div id="dmList" class="list"></div>
   </section>
 </main>
-
+  <section id="admin" class="panel">
+    <h3 style="margin:0 0 16px;font-size:18px;color:var(--accent)">Admin Control Panel</h3>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;height:100%">
+      
+      <!-- Users -->
+      <div style="background:var(--panel);border-radius:12px;padding:12px;display:flex;flex-direction:column">
+        <h4 style="margin:0 0 8px">Users</h4>
+        <input id="searchUsersAdmin" placeholder="Search users..." style="margin-bottom:8px;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:#fff">
+        <div id="adminUsersList" class="list" style="flex:1;overflow:auto"></div>
+      </div>
+      
+      <!-- Rooms & Actions -->
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="background:var(--panel);border-radius:12px;padding:12px;flex:1">
+          <h4 style="margin:0 0 8px">Rooms</h4>
+          <div id="adminRoomsList" class="list" style="max-height:200px;overflow:auto"></div>
+        </div>
+        
+        <div style="background:var(--panel);border-radius:12px;padding:12px">
+          <h4 style="margin:0 0 8px">Danger Zone</h4>
+          <button id="nukeAllMessages" class="btn" style="background:#ff4444">Delete ALL Messages (Global)</button>
+          <button id="wipeData" class="btn" style="background:#ff2222;margin-top:8px">WIPE ENTIRE SERVER (IRREVERSIBLE)</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
 <div id="chatOverlay" class="chat-overlay hidden" aria-hidden="true">
   <div class="chat-window" role="dialog" aria-modal="true">
     <div class="chat-header">
