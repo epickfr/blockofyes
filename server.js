@@ -530,7 +530,77 @@ app.post("/admin/upload-data", requireAuth, upload.single("backup"), (req, res) 
     res.status(400).send("Invalid or corrupted JSON file");
   }
 });
+// ==================== ADMIN PANEL ROUTES (ADD THIS) ====================
+// These are the ONLY routes your admin.html needs — everything else stays exactly as-is
 
+// 1. List all users
+app.get("/admin/users", requireAuth, (req, res) => {
+  if (!store.users[req.session.user]?.admin) return res.status(403).send("No");
+  const users = Object.values(store.users).map(u => ({
+    username: u.username,
+    displayName: u.displayName || u.username,
+    banned: !!u.banned
+  }));
+  res.json(users);
+});
+
+// 2. List all rooms
+app.get("/admin/rooms", requireAuth, (req, res) => {
+  if (!store.users[req.session.user]?.admin) return res.status(403).send("No");
+  res.json(store.rooms || {});
+});
+
+// 3. Global ban (works on any user)
+app.post("/admin/ban", requireAuth, (req, res) => {
+  if (!store.users[req.session.user]?.admin) return res.status(403).send("No");
+  const { user } = req.body;
+  if (store.users[user]) store.users[user].banned = true;
+  saveData();
+  res.json({ success: true });
+});
+
+// 4. Global unban
+app.post("/admin/unban", requireAuth, (req, res) => {
+  if (!store.users[req.session.user]?.admin) return res.status(403).send("No");
+  const { user } = req.body;
+  if (store.users[user]) delete store.users[user].banned;
+  saveData();
+  res.json({ success: true });
+});
+
+// 5. Delete any room
+app.post("/admin/delete-room", requireAuth, (req, res) => {
+  if (!store.users[req.session.user]?.admin) return res.status(403).send("No");
+  const { roomId } = req.body;
+  if (store.rooms[roomId]) {
+    delete store.rooms[roomId];
+    saveData();
+    io.emit("roomsUpdated");
+  }
+  res.json({ success: true });
+});
+
+// 6. Nuke all messages
+app.post("/admin/nuke-messages", requireAuth, (req, res) => {
+  if (!store.users[req.session.user]?.admin) return res.status(403).send("No");
+  Object.values(store.rooms).forEach(r => r.messages = []);
+  Object.keys(store.dms).forEach(k => store.dms[k] = []);
+  saveData();
+  res.json({ success: true });
+});
+
+// 7. Wipe entire server
+app.post("/admin/wipe", requireAuth, (req, res) => {
+  if (!store.users[req.session.user]?.admin) return res.status(403).send("No");
+  Object.keys(store).forEach(k => {
+    if (k === "users") store[k] = {};
+    else store[k] = {};
+  });
+  saveData();
+  res.json({ success: true });
+});
+
+// ==================== END OF ADMIN ROUTES ====================
 // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
 // MUST BE AFTER ALL ROUTES ! ! !
 const PORT = process.env.PORT || 3000;
