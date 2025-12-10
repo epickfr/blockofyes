@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Save Data - Epick Chat</title>
+  <style>
+    body { font-family: system-ui; background: #0f1114; color: #e8eefc; padding: 40px; text-align: center; }
+    button { padding: 12px 24px; font-size: 16px; background: #6b8cff; border: none; border-radius: 8px; color: #fff; cursor: pointer; }
+    button:hover { background: #5a7be0; }
+    a { color: #6b8cff; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <h1>Download Backup</h1>
+  <p>This will download the full <code>data.json</code> backup (users, messages, rooms, etc.)</p>
+  <br>
+  <button onclick="downloadBackup()">Download data.json</button>
+  <br><br>
+  <a href="/load.html">← Go to Restore Backup</a>
+
+  <script>
+    async function downloadBackup() {
+      const res = await fetch('/admin/download-data', {
+        headers: { 'Authorization': prompt('Enter admin password (or any text if no password set)') }
+      });
+      if (!res.ok) {
+        alert('Failed: ' + (await res.text()));
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'epick-chat-backup-' + new Date().toISOString().slice(0,10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
