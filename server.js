@@ -484,39 +484,26 @@ io.on("connection", (socket)=>{
 
 const ADMIN_BACKUP_PASSWORD = "epickfr";
 
+// Download full data.json (backup) – works even from browser when logged in as admin
 app.get("/admin/download-data", requireAuth, (req, res) => {
-  const auth = req.headers.authorization || "";
-  if (auth !== ADMIN_BACKUP_PASSWORD && !store.users[req.session.user]?.admin) {
-    return res.status(403).send("Forbidden");
+  const user = store.users[req.session.user];
+
+  // Allow only admins OR correct backup password in header
+  const authHeader = req.headers.authorization || "";
+  if (!user?.admin && authHeader !== ADMIN_BACKUP_PASSWORD) {
+    return res.status(403).send("Forbidden – you need admin rights or the backup password");
   }
+
+  if (!fs.existsSync(DATA_FILE)) {
+    return res.status(500).send("data.json not found on server");
+  }
+
+  const date = new Date().toISOString().slice(0,10);
   res.setHeader("Content-Type", "application/json");
-  res.setHeader("Content-Disposition", "attachment; filename=data.json");
-  res.send(fs.readFileSync(DATA_FILE, "utf8"));
-});
-
-app.post("/admin/upload-data", requireAuth, upload.single("backup"), (req, res) => {
-  const auth = req.headers.authorization || "";
-  if (auth !== ADMIN_BACKUP_PASSWORD && !store.users[req.session.user]?.admin) {
-    return res.status(403).send("Forbidden");
-  }
-  if (!req.file) return res.status(400).send("No file uploaded");
-
-  try {
-    const backupContent = fs.readFileSync(req.file.path, "utf8");
-    JSON.parse(backupContent); // validate JSON
-
-    // Overwrite current data.json
-    fs.writeFileSync(DATA_FILE, backupContent, "utf8");
-    console.log("Backup restored by", req.session.user);
-
-    // Clean up uploaded temp file
-    fs.unlinkSync(req.file.path);
-
-    res.send("Backup restored successfully! Server will reload data on next request.");
-  } catch (e) {
-    console.error("Restore failed", e);
-    res.status(400).send("Invalid backup file");
-  }
+  res.setHeader("Content-Disposition", `attachment; filename="epick-chat-backup-${date}.json"`);
+  
+  // This line makes it work directly in browser when logged in as admin
+  return res.sendFile(DATA_FILE);
 });
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, ()=>console.log(`Server running on port ${PORT}`));
