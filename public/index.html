@@ -231,7 +231,22 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       el.onclick = ()=> openDM(f.username);
       friendsListDiv.appendChild(el);
     });
-
+        // Friends list
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="${f.avatar||'/avatars/default.png'}" class="pfp">
+        <div>${getUsernameWithBadge(f.username)}</div>
+      </div>
+    `;
+    
+    // Recent users
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="${u.avatar||'/avatars/default.png'}" class="pfp">
+        <div>${getUsernameWithBadge(u.username)}</div>
+      </div>
+      <div><button class="btn secondary">Add</button></div>
+    `;
     recentUsersDiv.innerHTML = '';
     (data.recent||[]).forEach(u=>{
       const el = document.createElement('div'); el.className='list-item';
