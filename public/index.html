@@ -8,15 +8,6 @@
 :root{--bg:#0f1114;--panel:rgba(255,255,255,0.04);--muted:rgba(255,255,255,0.6);--accent:#6b8cff}
 *{box-sizing:border-box}
 body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#071021,#0f1114);color:#e8eefc}
-  .admin-badge {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  vertical-align: -3px;
-  margin-left: 6px;
-  image-rendering: crisp-edges;
-  border-radius: 3px;
-}
 .navbar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-bottom:1px solid rgba(255,255,255,0.02)}
 .brand{font-weight:800;color:var(--accent);font-size:18px}
 .nav-actions{display:flex;gap:8px;align-items:center}
@@ -231,10 +222,11 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       el.onclick = ()=> openDM(f.username);
       friendsListDiv.appendChild(el);
     });
+
     recentUsersDiv.innerHTML = '';
     (data.recent||[]).forEach(u=>{
       const el = document.createElement('div'); el.className='list-item';
-      bubble.innerHTML = `<div style="display:flex;align-items:center;gap:10px"><img src="${u.avatar||'/avatars/default.png'}" class="pfp"><div>${u.username}</div></div><div><button class="btn secondary">Add</button></div>`;
+      el.innerHTML = `<div style="display:flex;align-items:center;gap:10px"><img src="${u.avatar||'/avatars/default.png'}" class="pfp"><div>${u.username}</div></div><div><button class="btn secondary">Add</button></div>`;
       el.querySelector('button').onclick = async e=>{ e.stopPropagation(); const resp = await fetch('/friend-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ to: u.username })}); const j = await resp.json(); alert(j.success ? 'Request sent' : j.message || 'Error'); await loadFriendsAndRecent(); };
       recentUsersDiv.appendChild(el);
     });
@@ -259,7 +251,6 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
         manage.onclick = (e)=>{ e.stopPropagation(); openRoomManageDialog(id, r); };
         right.appendChild(manage);
       }
-
       el.appendChild(left); el.appendChild(right);
       el.onclick = ()=> openRoom(id, r.name);
       roomsListDiv.appendChild(el);
@@ -344,6 +335,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       dmListDiv.appendChild(el);
     });
   }
+
   // ---------- CHAT UI ----------
   function formatDate(ts){ const d = new Date(ts||Date.now()); const optsTime = { hour:'numeric', minute:'2-digit' }; const timeStr = d.toLocaleTimeString([], optsTime); return `${timeStr}, ${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`; }
 
@@ -372,72 +364,39 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     loadDMList();
   }
 
-function createMessageElement(m) {
-  const el = document.createElement('div');
-  el.className = 'chat-message' + (m.sender === me ? ' me' : '');
-  el.dataset.msgid = m.id;
-
-  const av = document.createElement('img');
-  av.src = m.avatar || '/avatars/default.png';
-  av.className = 'pfp';
-
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
-
-  // ADMIN BADGE: Only show if user is admin
-  const isUserAdmin = store.users[m.sender]?.admin;
-  const adminBadge = isUserAdmin
-    ? ' <img src="https://cdn3.emoji.gg/emojis/1856-admin-badge.png" class="admin-badge" title="Administrator">'
-    : '';
-
-  // Edit/Delete buttons (same as before)
-  let allowDelete = (m.sender === me) || isAdmin;
-  if (current?.type === 'room' && current.roomOwner === me) allowDelete = true;
-
-  if (allowDelete) {
-    const actions = document.createElement('div');
-    actions.className = 'actions';
-    actions.innerHTML = `<span data-act="edit" style="cursor:pointer">Edit</span><span data-act="delete" style="cursor:pointer">Delete</span>`;
-    actions.onclick = async (e) => {
-      const act = e.target.dataset.act;
-      if (act === 'edit') {
-        const newMsg = prompt('Edit message:', m.message);
-        if (newMsg !== null) {
-          await fetch('/edit-message', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: m.id,
-              newMsg,
-              dmWith: current?.type === 'dm' ? current.id : undefined,
-              roomId: current?.type === 'room' ? current.id : undefined
-            })
-          });
+  function createMessageElement(m){
+    const el = document.createElement('div'); el.className = 'chat-message' + (m.sender===me ? ' me' : '');
+    el.dataset.msgid = m.id;
+    const av = document.createElement('img'); av.src = m.avatar||'/avatars/default.png'; av.className='pfp';
+    const bubble = document.createElement('div'); bubble.className='bubble';
+    bubble.innerHTML = `<div class="meta">${m.sender} • ${formatDate(m.time)}</div><div style="margin-top:8px">${escapeHtml(m.message||'')}</div>`;
+    let allowDelete = (m.sender === me) || isAdmin;
+    if(current?.type === 'room' && current.roomOwner) {
+      if(current.roomOwner === me) allowDelete = true;
+    }
+    if(allowDelete) {
+      const actions = document.createElement('div'); actions.className='actions';
+      actions.innerHTML = `<span data-act="edit" style="cursor:pointer">Edit</span><span data-act="delete" style="cursor:pointer">Delete</span>`;
+      actions.onclick = async (e)=> {
+        const act = e.target.dataset.act;
+        if(act === 'edit') {
+          const newMsg = prompt('Edit message:', m.message);
+          if(newMsg !== null) {
+            await fetch('/edit-message',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: m.id, newMsg, dmWith: current?.type==='dm' ? current.id : undefined, roomId: current?.type==='room' ? current.id : undefined })});
+          }
         }
-      }
-      if (act === 'delete') {
-        if (confirm('Delete message?')) {
-          await fetch('/delete-message', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: m.id,
-              dmWith: current?.type === 'dm' ? current.id : undefined,
-              roomId: current?.type === 'room' ? current.id : undefined
-            })
-          });
-          const found = chatMessages.querySelector(`[data-msgid="${m.id}"]`);
-          if (found) found.remove();
+        if(act === 'delete') {
+          if(confirm('Delete message?')) {
+            await fetch('/delete-message',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: m.id, dmWith: current?.type==='dm' ? current.id : undefined, roomId: current?.type==='room' ? current.id : undefined })});
+            const found = chatMessages.querySelector(`[data-msgid="${m.id}"]`); if(found) found.remove();
+          }
         }
-      }
-    };
-    bubble.appendChild(actions);
+      };
+      bubble.appendChild(actions);
+    }
+    el.appendChild(av); el.appendChild(bubble);
+    return el;
   }
-
-  el.appendChild(av);
-  el.appendChild(bubble);
-  return el;
-}
 
   function appendMessage(m){
     if(!m || !m.id) return;
