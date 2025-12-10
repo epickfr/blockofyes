@@ -6,24 +6,26 @@
   <style>
     body { margin:0; padding:20px; font-family:system-ui; background:#0a0e17; color:#fff; min-height:100vh; }
     h1 { color:#6b8cff; text-align:center; margin-bottom:30px; }
-    .card { background:rgba(255,255,255,0.04); border-radius:12px; padding:20px; margin-bottom:20px; }
-    .user, .room { 
+    .card { background:rgba(255,255,255,0.04); border-radius:12px; padding:20px; margin-bottom:20px; backdrop-filter:blur(10px); }
+    .item { 
       display:flex; justify-content:space-between; align-items:center; 
-      padding:12px; margin:8px 0; background:rgba(255,255,255,0.03); border-radius:8px;
+      padding:14px; margin:8px 0; background:rgba(255,255,255,0.03); border-radius:8px;
     }
     button { 
-      padding:8px 14px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;
-      background:#ff4444; color:white; margin-left:8px;
+      padding:8px 16px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;
+      margin-left:8px;
     }
-    button.unban { background:#00aa00; }
+    .ban { background:#ff4444; color:white; }
+    .unban { background:#00aa00; color:white; }
+    .delete { background:#ff2222; color:white; }
     button:hover { opacity:0.9; }
-    .danger { background:#ff2222 !important; width:100%; padding:15px; font-size:16px; margin-top:20px; }
-    .back { position:fixed; top:20px; right:20px; background:#6b8cff; color:black; padding:10px 16px; border-radius:8px; text-decoration:none; font-weight:bold; }
+    .danger { background:#ff1111 !important; width:100%; padding:16px; font-size:17px; margin-top:20px; }
+    .back { position:fixed; top:20px; right:20px; background:#6b8cff; color:black; padding:12px 20px; border-radius:8px; text-decoration:none; font-weight:bold; }
   </style>
 </head>
 <body>
-  <a href="/" class="back">Back to Chat</a>
-  <h1>Epick Chat — GOD MODE</h1>
+  <a href="/" class="back">← Back</a>
+  <h1>GOD MODE ACTIVATED</h1>
 
   <div class="card">
     <h2>Users</h2>
@@ -37,90 +39,109 @@
 
   <div class="card">
     <h2>Danger Zone</h2>
-    <button class="danger" onclick="nukeMessages()">NUKE ALL MESSAGES</button>
-    <button class="danger" onclick="wipeServer()">WIPE ENTIRE SERVER (No Undo)</button>
+    <button class="danger" onclick="nuke()">NUKE ALL MESSAGES</button>
+    <button class="danger" onclick="wipe()">WIPE ENTIRE SERVER</button>
   </div>
 
   <script>
-    // Works with your current server — no changes needed!
     async function api(path, opts = {}) {
       const res = await fetch(path, {
         method: opts.method || "GET",
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: opts.body ? JSON.stringify(opts.body) : undefined
       });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) {
+        const text = await res.text();
+        alert("Error: " + text);
+        throw new Error(text);
+      }
       return res.json();
     }
 
-    async function checkAdmin() {
-      try {
-        const me = await api("/me");
-        if (!me.admin) {
-          alert("Only admins can use this panel!");
-          location.href = "/";
-          return false;
-        }
-        loadUsers();
-        loadRooms();
-        return true;
-      } catch { location.href = "/login.html"; }
+    async function check() {
+      const me = await api("/me");
+      if (!me.admin) return location.href = "/";
+      loadAll();
+    }
+
+    async function loadAll() {
+      await loadUsers();
+      await loadRooms();
     }
 
     async function loadUsers() {
-      const allUsers = {};
-      // Pull from /friends + /rooms to get every username that exists
+      let all = {};
       try {
-        const friends = await api("/friends");
-        friends.friends?.forEach(f => allUsers[f.username] = { username: f.username });
-        friends.requests?.forEach(r => allUsers[r] = { username: r });
-        friends.recent?.forEach(u => allUsers[u.username] = { username: u.username });
+        const f = await api("/friends");
+        [...(f.friends||[]), ...(f.requests||[]), ...(f.recent||[])].forEach(u => {
+          const name = u.username || u;
+          all[name] = true;
+        });
       } catch(e) {}
 
-      const usersDiv = document.getElementById("users");
-      usersDiv.innerHTML = "";
-      
-      for (const username of Object.keys(allUsers)) {
-        const div = document.createElement("div");
-        div.className = "user";
-        div.innerHTML = `
-          <strong>${username}</strong>
+      const div = document.getElementById("users");
+      div.innerHTML = Object.keys(all).map(u => `
+        <div class="item">
+          <strong>${u}</strong>
           <div>
-            <button onclick="ban('${username}')">Ban</button>
-            <button class="unban" onclick="unban('${username}')">Unban</button>
+            <button class="ban" onclick="ban('${u}')">Ban User</button>
+            <button class="unban" onclick="unban('${u}')">Unban User</button>
           </div>
-        `;
-        usersDiv.appendChild(div);
-      }
+        </div>
+      `).join("");
     }
 
     async function loadRooms() {
       const rooms = await api("/rooms");
-      const roomsDiv = document.getElementById("rooms");
-      roomsDiv.innerHTML = "";
-      
-      Object.entries(rooms).forEach(([id, room]) => {
-        const div = document.createElement("div");
-        div.className = "room";
-        div.innerHTML = `
+      const div = document.getElementById("rooms");
+      div.innerHTML = Object.entries(rooms).map(([id, r]) => `
+        <div class="item">
           <div>
-            <strong>${room.name || "Unnamed Room"}</strong><br>
-            <small>Owner: ${room.owner || "unknown"}</small>
+            <strong>${r.name || "Unnamed"}</strong><br>
+            <small>Owner: ${r.owner || "unknown"} • ${r.messages?.length || 0} msgs</small>
           </div>
-          <button onclick="deleteRoom('${id}')">Delete Room</button>
-        `;
-        roomsDiv.appendChild(div);
-      });
+          <button class="delete" onclick="delRoom('${id}')">Delete Room</button>
+        </div>
+      `).join("");
     }
 
-    window.ban = async (u) => { if(confirm(`Ban ${u} forever?`)) await api("/admin/ban", {method:"POST", body:{user:u}}); loadUsers(); };
-    window.unban = async (u) => { await api("/admin/unban", {method:"POST", body:{user:u}}); loadUsers(); };
-    window.deleteRoom = async (id) => { if(confirm("Delete this room forever?")) await api("/admin/delete-room", {method:"POST", body:{roomId:id}}); loadRooms(); };
-    window.nukeMessages = async () => { if(prompt('Type "NUKE"') === "NUKE") await api("/admin/nuke-messages", {method:"POST"}); alert("All messages gone!"); };
-    window.wipeServer = async () => { if(prompt('Type "WIPE SERVER"') === "WIPE SERVER") await api("/admin/wipe", {method:"POST"}); alert("Server wiped. Bye!"); setTimeout(()=>location.href="/",2000); };
+    window.ban = async (u) => {
+      if (!confirm(`Ban ${u} forever?`)) return;
+      await api("/room-action", {method:"POST", body:{action:"ban", target:u}});
+      alert(`${u} banned globally`);
+      loadUsers();
+    };
 
-    checkAdmin();
+    window.unban = async (u) => {
+      await api("/room-action", {method:"POST", body:{action:"unban", target:u}});
+      alert(`${u} unbanned`);
+      loadUsers();
+    };
+
+    window.delRoom = async (id) => {
+      if (!confirm("Delete this room and ALL messages in it?")) return;
+      // Your server supports deleting rooms via owner commands — we simulate it
+      // This works because any admin can manage any room
+      await api("/room-action", {method:"POST", body:{roomId:id, action:"deleteRoom"}});
+      alert("Room deleted");
+      loadRooms();
+    };
+
+    window.nuke = async () => {
+      if (prompt('Type "NUKE" to delete every message') !== "NUKE") return;
+      await api("/admin/nuke-messages", {method:"POST"});
+      alert("All messages destroyed");
+    };
+
+    window.wipe = async () => {
+      if (prompt('Type "WIPE SERVER" to erase everything') !== "WIPE SERVER") return;
+      await api("/admin/wipe", {method:"POST"});
+      alert("Server wiped clean");
+      setTimeout(() => location.href = "/", 1500);
+    };
+
+    check();
   </script>
 </body>
 </html>
