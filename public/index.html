@@ -273,11 +273,12 @@ const adminPanel = document.getElementById('admin');
 
 async function loadAdminPanel() {
   if (!isAdmin) return;
-  
   adminTab.style.display = 'block';
-  
-  // Load users
-  const users = Object.values(store.users || {}).sort((a,b) => a.username.localeCompare(b.username));
+
+  // === Load users from server ===
+  const usersRes = await fetch('/admin/users');
+  const users = await usersRes.json();
+
   const list = document.getElementById('adminUsersList');
   list.innerHTML = '';
   users.forEach(u => {
@@ -290,7 +291,7 @@ async function loadAdminPanel() {
         <div style="font-size:12px;opacity:0.7">${u.displayName || ''}</div>
       </div>
       <div>
-        ${u.banned ? 
+        ${u.banned ?
           `<button class="btn secondary" onclick="unbanUser('${u.username}')">Unban</button>` :
           `<button class="btn" style="background:#ff4444" onclick="banUser('${u.username}')">Ban</button>`
         }
@@ -298,6 +299,26 @@ async function loadAdminPanel() {
     `;
     list.appendChild(el);
   });
+
+  // === Load rooms from server ===
+  const roomsRes = await fetch('/admin/rooms');
+  const rooms = await roomsRes.json();
+
+  const roomsList = document.getElementById('adminRoomsList');
+  roomsList.innerHTML = '';
+  Object.entries(rooms).forEach(([id, r]) => {
+    const el = document.createElement('div');
+    el.className = 'list-item';
+    el.innerHTML = `
+      <div style="flex:1">
+        <strong>${escapeHtml(r.name)}</strong><br>
+        <small>Owner: ${r.owner || 'none'} • ${r.messages?.length || 0} msgs</small>
+      </div>
+      <button class="btn" style="background:#ff4444;font-size:11px" onclick="deleteRoom('${id}')">Delete</button>
+    `;
+    roomsList.appendChild(el);
+  });
+}
   
   // Load rooms
   const roomsList = document.getElementById('adminRoomsList');
