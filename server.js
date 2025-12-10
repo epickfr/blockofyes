@@ -575,22 +575,7 @@ app.post("/admin/wipe", (req, res) => {
   saveData();
   res.json({success:true});
 });
-// Give admins list of all users
-app.get("/admin/users", requireAuth, (req, res) => {
-  if (!store.users[req.session.user]?.admin) return res.status(403).send("No");
-  const users = Object.values(store.users).map(u => ({
-    username: u.username,
-    displayName: u.displayName,
-    banned: !!u.banned
-  }));
-  res.json(users);
-});
 
-// Give admins list of all rooms
-app.get("/admin/rooms", requireAuth, (req, res) => {
-  if (!store.users[req.session.user]?.admin) return res.status(403).send("No");
-  res.json(store.rooms || {});
-});
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
   console.log(`Epick Chat running on: ${PORT}`);
