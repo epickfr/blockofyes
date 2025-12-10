@@ -398,7 +398,7 @@ function createMessageElement(m) {
 
   bubble.innerHTML = `
     <div class="meta">
-      ${escapeHtml(m.sender)}${adminBadge} • ${formatDate(m.time)}
+      ${getUsernameWithBadge(m.sender)} • ${formatDate(m.time)}
     </div>
     <div style="margin-top:8px">${escapeHtml(m.message || '')}</div>
   `;
