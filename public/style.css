@@ -47,3 +47,13 @@ main{display:flex; gap:18px; padding:18px; height:calc(100vh - 120px)}
 /* toast */
 .toast{position:fixed; right:20px; bottom:20px; background:var(--accent); color:#fff; padding:10px 14px; border-radius:8px; opacity:0; transform:translateY(8px); transition:all .25s}
 .toast.visible{opacity:1; transform:translateY(0)}
+
+
+.admin-badge {
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+  margin-left: 6px;
+  border-radius: 4px;
+  image-rendering: pixelated; /* keeps it crisp */
+}
