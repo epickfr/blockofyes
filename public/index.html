@@ -19,6 +19,13 @@ body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linea
 main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px}
 .panel{background:var(--panel);border-radius:12px;padding:12px;min-height:64vh;display:none;flex-direction:column;gap:12px}
 .panel.active{display:flex}
+.admin-tag {
+  color: #ff4444;
+  font-weight: 800;
+  font-size: 11px;
+  margin-right: 6px;
+  letter-spacing: 0.5px;
+}
 .list{display:flex;flex-direction:column;gap:8px;max-height:56vh;overflow:auto;padding-right:6px}
 .list-item{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.005));cursor:pointer;transition:transform .08s}
 .list-item:hover{transform:translateY(-3px)}
@@ -195,7 +202,10 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     if(n.type === 'room_invite') return `${n.payload.by} invited you to ${n.payload.roomName}`;
     return JSON.stringify(n.payload || {});
   }
-
+  function getUsernameDisplay(username) {
+    const isAdmin = store.users[username]?.admin;
+    return isAdmin ? `<span class="admin-tag">(ADMIN)</span>${escapeHtml(username)}` : escapeHtml(username);
+  }
   socket.on('inboxUpdate', n => {
     if(inboxPanel.style.display !== 'none') loadInbox();
     else {
@@ -214,7 +224,22 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       el.querySelector('button').onclick = async e=>{ e.stopPropagation(); await fetch('/accept-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ from:r })}); socket.emit('fetchFriends'); await loadFriendsAndRecent(); };
       friendRequestsDiv.appendChild(el);
     });
-
+    // Friends list
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="${f.avatar||'/avatars/default.png'}" class="pfp">
+        <div>${getUsernameDisplay(f.username)}</div>
+      </div>
+    `;
+    
+    // Recent users
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="${u.avatar||'/avatars/default.png'}" class="pfp">
+        <div>${getUsernameDisplay(u.username)}</div>
+      </div>
+      <div><button class="btn secondary">Add</button></div>
+    `;
     friendsListDiv.innerHTML = '';
     (data.friends||[]).forEach(f=>{
       const el = document.createElement('div'); el.className='list-item';
@@ -234,6 +259,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
 
   // ---------- ROOMS ----------
   async function loadRooms(){
+    <div class="room-meta">owner: ${r.owner ? getUsernameDisplay(r.owner) : '—'} · ${r.privacy||'public'}</div>
     const data = await api('/rooms'); if(!data) return;
     roomsListDiv.innerHTML = '';
     Object.entries(data).forEach(([id, r])=>{
@@ -330,7 +356,12 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     friends.sort((a,b)=> (b.unread?1:0) - (a.unread?1:0));
     friends.forEach(f=>{
       const el = document.createElement('div'); el.className='list-item';
-      el.innerHTML = `<div style="display:flex;align-items:center;gap:12px"><img src="${f.avatar||'/avatars/default.png'}" class="pfp"><div>@ ${f.username}</div>${f.unread?'<div class="unread-dot"></div>':''}</div>`;
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px">
+          <img src="${f.avatar||'/avatars/default.png'}" class="pfp">
+          <div>@ ${getUsernameDisplay(f.username)}${f.unread?'<div class="unread-dot"></div>':''}</div>
+        </div>
+      `;
       el.onclick = ()=> openDM(f.username);
       dmListDiv.appendChild(el);
     });
@@ -369,7 +400,12 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     el.dataset.msgid = m.id;
     const av = document.createElement('img'); av.src = m.avatar||'/avatars/default.png'; av.className='pfp';
     const bubble = document.createElement('div'); bubble.className='bubble';
-    bubble.innerHTML = `<div class="meta">${m.sender} • ${formatDate(m.time)}</div><div style="margin-top:8px">${escapeHtml(m.message||'')}</div>`;
+    bubble.innerHTML = `
+      <div class="meta">
+        ${getUsernameDisplay(m.sender)} • ${formatDate(m.time)}
+      </div>
+      <div style="margin-top:8px">${escapeHtml(m.message || '')}</div>
+    `;
     let allowDelete = (m.sender === me) || isAdmin;
     if(current?.type === 'room' && current.roomOwner) {
       if(current.roomOwner === me) allowDelete = true;
