@@ -259,12 +259,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
         manage.onclick = (e)=>{ e.stopPropagation(); openRoomManageDialog(id, r); };
         right.appendChild(manage);
       }
-      const meta = document.createElement('div'); 
-      meta.innerHTML = `
-        <div style="font-weight:700">${r.name}</div>
-        <div class="room-meta">${r.description||''}</div>
-        <div class="room-meta">owner: ${r.owner ? getUsernameWithBadge(r.owner) : '—'} · ${r.privacy||'public'}</div>
-      `;
+
       el.appendChild(left); el.appendChild(right);
       el.onclick = ()=> openRoom(id, r.name);
       roomsListDiv.appendChild(el);
@@ -348,12 +343,6 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       el.onclick = ()=> openDM(f.username);
       dmListDiv.appendChild(el);
     });
-  }
-  function getUsernameWithBadge(username) {
-    if (store.users[username]?.admin) {
-      return `${escapeHtml(username)} <img src="https://cdn3.emoji.gg/emojis/1856-admin-badge.png" class="admin-badge" title="Administrator">`;
-    }
-    return escapeHtml(username);
   }
   // ---------- CHAT UI ----------
   function formatDate(ts){ const d = new Date(ts||Date.now()); const optsTime = { hour:'numeric', minute:'2-digit' }; const timeStr = d.toLocaleTimeString([], optsTime); return `${timeStr}, ${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`; }
