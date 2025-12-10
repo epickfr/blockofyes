@@ -70,7 +70,39 @@ app.use(express.static(path.join(__dirname, "public")));
 const upload = multer({ dest: path.join(__dirname, "tmp_uploads") });
 
 function requireAuth(req,res,next){ if(!req.session.user) return res.status(401).json({ loggedIn:false }); next(); }
+// BANNED USERS: Auto-logout + block login
+app.use((req, res, next) => {
+  if (req.session.user) {
+    const user = store.users[req.session.user];
+    if (user?.banned) {
+      req.session.destroy(); // log them out
+      if (req.path === "/me" || req.path === "/login") {
+        return res.status(403).json({ loggedIn: false, banned: true, message: "You are permanently banned." });
+      }
+      return res.send(`
+        <script>
+          alert("You have been permanently banned.");
+          location.href = "/login.html";
+        </script>
+      `);
+    }
+  }
+  next();
+});
 
+// Also block banned users on login attempt
+app.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+  const u = store.users[username];
+  if (!u) return res.json({ success: false, message: "Invalid credentials" });
+  if (u.banned) {
+    return res.json({ success: false, message: "You are permanently banned." });
+  }
+  const ok = await bcrypt.compare(password, u.passwordHash);
+  if (!ok) return res.json({ success: false, message: "Invalid credentials" });
+  req.session.user = username;
+  res.json({ success: true });
+});
 /* ---------- AUTH ----------
  - Passwords are hashed with bcrypt
  - Users have: username, passwordHash, avatar, displayName, bio, createdAt, admin, dmPrivacy
