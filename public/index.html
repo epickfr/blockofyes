@@ -364,39 +364,79 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     loadDMList();
   }
 
-  function createMessageElement(m){
-    const el = document.createElement('div'); el.className = 'chat-message' + (m.sender===me ? ' me' : '');
-    el.dataset.msgid = m.id;
-    const av = document.createElement('img'); av.src = m.avatar||'/avatars/default.png'; av.className='pfp';
-    const bubble = document.createElement('div'); bubble.className='bubble';
-    bubble.innerHTML = `<div class="meta">${m.sender} • ${formatDate(m.time)}</div><div style="margin-top:8px">${escapeHtml(m.message||'')}</div>`;
-    let allowDelete = (m.sender === me) || isAdmin;
-    if(current?.type === 'room' && current.roomOwner) {
-      if(current.roomOwner === me) allowDelete = true;
-    }
-    if(allowDelete) {
-      const actions = document.createElement('div'); actions.className='actions';
-      actions.innerHTML = `<span data-act="edit" style="cursor:pointer">Edit</span><span data-act="delete" style="cursor:pointer">Delete</span>`;
-      actions.onclick = async (e)=> {
-        const act = e.target.dataset.act;
-        if(act === 'edit') {
-          const newMsg = prompt('Edit message:', m.message);
-          if(newMsg !== null) {
-            await fetch('/edit-message',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: m.id, newMsg, dmWith: current?.type==='dm' ? current.id : undefined, roomId: current?.type==='room' ? current.id : undefined })});
-          }
+function createMessageElement(m) {
+  const el = document.createElement('div');
+  el.className = 'chat-message' + (m.sender === me ? ' me' : '');
+  el.dataset.msgid = m.id;
+
+  const av = document.createElement('img');
+  av.src = m.avatar || '/avatars/default.png';
+  av.className = 'pfp';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+
+  // ADMIN BADGE: Only show if user is admin
+  const isUserAdmin = store.users[m.sender]?.admin;
+  const adminBadge = isUserAdmin
+    ? ' <img src="https://cdn3.emoji.gg/emojis/1856-admin-badge.png" class="admin-badge" title="Administrator">'
+    : '';
+
+  bubble.innerHTML = `
+    <div class="meta">
+      ${escapeHtml(m.sender)}${adminBadge} • ${formatDate(m.time)}
+    </div>
+    <div style="margin-top:8px">${escapeHtml(m.message || '')}</div>
+  `;
+
+  // Edit/Delete buttons (same as before)
+  let allowDelete = (m.sender === me) || isAdmin;
+  if (current?.type === 'room' && current.roomOwner === me) allowDelete = true;
+
+  if (allowDelete) {
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+    actions.innerHTML = `<span data-act="edit" style="cursor:pointer">Edit</span><span data-act="delete" style="cursor:pointer">Delete</span>`;
+    actions.onclick = async (e) => {
+      const act = e.target.dataset.act;
+      if (act === 'edit') {
+        const newMsg = prompt('Edit message:', m.message);
+        if (newMsg !== null) {
+          await fetch('/edit-message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: m.id,
+              newMsg,
+              dmWith: current?.type === 'dm' ? current.id : undefined,
+              roomId: current?.type === 'room' ? current.id : undefined
+            })
+          });
         }
-        if(act === 'delete') {
-          if(confirm('Delete message?')) {
-            await fetch('/delete-message',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: m.id, dmWith: current?.type==='dm' ? current.id : undefined, roomId: current?.type==='room' ? current.id : undefined })});
-            const found = chatMessages.querySelector(`[data-msgid="${m.id}"]`); if(found) found.remove();
-          }
+      }
+      if (act === 'delete') {
+        if (confirm('Delete message?')) {
+          await fetch('/delete-message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: m.id,
+              dmWith: current?.type === 'dm' ? current.id : undefined,
+              roomId: current?.type === 'room' ? current.id : undefined
+            })
+          });
+          const found = chatMessages.querySelector(`[data-msgid="${m.id}"]`);
+          if (found) found.remove();
         }
-      };
-      bubble.appendChild(actions);
-    }
-    el.appendChild(av); el.appendChild(bubble);
-    return el;
+      }
+    };
+    bubble.appendChild(actions);
   }
+
+  el.appendChild(av);
+  el.appendChild(bubble);
+  return el;
+}
 
   function appendMessage(m){
     if(!m || !m.id) return;
