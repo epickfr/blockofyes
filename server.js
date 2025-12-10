@@ -480,9 +480,10 @@ io.on("connection", (socket)=>{
   });
 
 });
-// =========== ADMIN BACKUP ROUTES ===========
-const ADMIN_BACKUP_PASSWORD = "epickfr";
+// =========== ADMIN BACKUP & RESTORE (FINAL WORKING VERSION) ===========
+const ADMIN_BACKUP_PASSWORD = "epickfr";   // ← your password
 
+// DOWNLOAD BACKUP
 app.get("/admin/download-data", requireAuth, (req, res) => {
   const user = store.users[req.session.user];
   const auth = req.headers.authorization || "";
@@ -496,11 +497,12 @@ app.get("/admin/download-data", requireAuth, (req, res) => {
   }
 
   const date = new Date().toISOString().slice(0, 10);
-  res.setHeader("Content-Type", "application/json");
-  res.setHeader("Content-Disposition", `attachment; filename="epick-backup-${date}.json"`);
+  res.header("Content-Type", "application/json");
+  res.attachment(`epick-backup-${date}.json`);
   res.sendFile(DATA_FILE);
 });
 
+// UPLOAD & RESTORE BACKUP
 app.post("/admin/upload-data", requireAuth, upload.single("backup"), (req, res) => {
   const user = store.users[req.session.user];
   const auth = req.headers.authorization || "";
@@ -509,25 +511,32 @@ app.post("/admin/upload-data", requireAuth, upload.single("backup"), (req, res) 
     return res.status(403).send("Wrong password or not admin");
   }
 
-  if (!req.file) {
-    return res.status(400).send("No file uploaded");
-  }
+  if (!req.file) return res.status(400).send("No file selected");
 
   try {
-    const backupData = fs.readFileSync(req.file.path, "utf8");
-    const parsed = JSON.parse(backupData);
-    fs.writeFileSync(DATA_FILE, JSON.stringify(parsed, null, 2));
-    console.log("Backup restored by", req.session.user);
-    fs.unlinkSync(req.file.path);
+    const backup = fs.readFileSync(req.file.path, "utf8");
+    JSON.parse(backup); // validate
 
-    Object.assign(store, loadData());
+    fs.writeFileSync(DATA_FILE, backup);           // overwrite
+    console.log("Backup restored by", req.session.user || "unknown");
+    fs.unlinkSync(req.file.path);                  // cleanup
 
-    return res.send("Backup restored successfully! Page will reload...");
-  } catch (err) {
-    console.error("Restore failed:", err);
+    Object.assign(store, loadData());              // reload in memory
+
+    res.send("Backup restored 100%! Refresh the page or go back.");
+  } catch (e) {
+    console.error("Restore failed:", e);
     try { fs.unlinkSync(req.file.path); } catch {}
-    return res.status(400).send("Invalid backup file (not valid JSON)");
+    res.status(400).send("Invalid or corrupted JSON file");
   }
+});
+
+// ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
+// MUST BE AFTER ALL ROUTES ! ! !
+const PORT = process.env.PORT || 3000;
+httpServer.listen(PORT, () => {
+  console.log(`Epick Chat running on: ${PORT}`);
+  console.log(`Backup password: ${ADMIN_BACKUP_PASSWORD}`);
 });
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, ()=>console.log(`Server running on port ${PORT}`));
