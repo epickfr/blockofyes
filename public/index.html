@@ -231,26 +231,10 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       el.onclick = ()=> openDM(f.username);
       friendsListDiv.appendChild(el);
     });
-        // Friends list
-    el.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px">
-        <img src="${f.avatar||'/avatars/default.png'}" class="pfp">
-        <div>${getUsernameWithBadge(f.username)}</div>
-      </div>
-    `;
-    
-    // Recent users
-    el.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px">
-        <img src="${u.avatar||'/avatars/default.png'}" class="pfp">
-        <div>${getUsernameWithBadge(u.username)}</div>
-      </div>
-      <div><button class="btn secondary">Add</button></div>
-    `;
     recentUsersDiv.innerHTML = '';
     (data.recent||[]).forEach(u=>{
       const el = document.createElement('div'); el.className='list-item';
-      el.innerHTML = `<div style="display:flex;align-items:center;gap:10px"><img src="${u.avatar||'/avatars/default.png'}" class="pfp"><div>${u.username}</div></div><div><button class="btn secondary">Add</button></div>`;
+      bubble.innerHTML = `<div style="display:flex;align-items:center;gap:10px"><img src="${u.avatar||'/avatars/default.png'}" class="pfp"><div>${u.username}</div></div><div><button class="btn secondary">Add</button></div>`;
       el.querySelector('button').onclick = async e=>{ e.stopPropagation(); const resp = await fetch('/friend-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ to: u.username })}); const j = await resp.json(); alert(j.success ? 'Request sent' : j.message || 'Error'); await loadFriendsAndRecent(); };
       recentUsersDiv.appendChild(el);
     });
@@ -416,13 +400,6 @@ function createMessageElement(m) {
   const adminBadge = isUserAdmin
     ? ' <img src="https://cdn3.emoji.gg/emojis/1856-admin-badge.png" class="admin-badge" title="Administrator">'
     : '';
-
-  bubble.innerHTML = `
-    <div class="meta">
-      ${getUsernameWithBadge(m.sender)} • ${formatDate(m.time)}
-    </div>
-    <div style="margin-top:8px">${escapeHtml(m.message || '')}</div>
-  `;
 
   // Edit/Delete buttons (same as before)
   let allowDelete = (m.sender === me) || isAdmin;
