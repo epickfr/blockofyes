@@ -532,52 +532,11 @@ app.post("/admin/upload-data", requireAuth, upload.single("backup"), (req, res) 
 });
 
 // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
-
 // MUST BE AFTER ALL ROUTES ! ! !
-// === ADMIN ROUTES (only real admins can use) ===
-app.use('/admin/*', requireAuth, (req, res, next) => {
-  if (!store.users[req.session.user]?.admin) return res.status(403).send("Admins only");
-  next();
-});
-
-app.post("/admin/ban", (req, res) => {
-  const {user} = req.body;
-  if (store.users[user]) store.users[user].banned = true;
-  saveData();
-  res.json({success:true});
-});
-app.post("/admin/unban", (req, res) => {
-  const {user} = req.body;
-  if (store.users[user]) delete store.users[user].banned;
-  saveData();
-  res.json({success:true});
-});
-app.post("/admin/delete-room", (req, res) => {
-  const {roomId} = req.body;
-  delete store.rooms[roomId];
-  saveData();
-  io.emit("roomsUpdated");
-  res.json({success:true});
-});
-app.post("/admin/nuke-messages", (req, res) => {
-  Object.values(store.rooms).forEach(r => r.messages = []);
-  Object.keys(store.dms).forEach(key => store.dms[key] = []);
-  saveData();
-  io.emit("nukeAll"); // optional: tell clients to clear chat
-  res.json({success:true});
-});
-app.post("/admin/wipe", (req, res) => {
-  store.users = {};
-  store.rooms = {};
-  store.dms = {};
-  store.notifications = {};
-  store.friendRequests = {};
-  saveData();
-  res.json({success:true});
-});
-
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
   console.log(`Epick Chat running on: ${PORT}`);
   console.log(`Backup password: ${ADMIN_BACKUP_PASSWORD}`);
 });
+const PORT = process.env.PORT || 3000;
+httpServer.listen(PORT, ()=>console.log(`Server running on port ${PORT}`));
