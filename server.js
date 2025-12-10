@@ -481,29 +481,53 @@ io.on("connection", (socket)=>{
 
 });
 // =========== ADMIN BACKUP ROUTES ===========
-
 const ADMIN_BACKUP_PASSWORD = "epickfr";
 
-// Download full data.json (backup) – works even from browser when logged in as admin
 app.get("/admin/download-data", requireAuth, (req, res) => {
   const user = store.users[req.session.user];
+  const auth = req.headers.authorization || "";
 
-  // Allow only admins OR correct backup password in header
-  const authHeader = req.headers.authorization || "";
-  if (!user?.admin && authHeader !== ADMIN_BACKUP_PASSWORD) {
-    return res.status(403).send("Forbidden – you need admin rights or the backup password");
+  if (!user?.admin && auth !== ADMIN_BACKUP_PASSWORD) {
+    return res.status(403).send("Wrong password or not admin");
   }
 
   if (!fs.existsSync(DATA_FILE)) {
-    return res.status(500).send("data.json not found on server");
+    return res.status(500).send("data.json missing");
   }
 
-  const date = new Date().toISOString().slice(0,10);
+  const date = new Date().toISOString().slice(0, 10);
   res.setHeader("Content-Type", "application/json");
-  res.setHeader("Content-Disposition", `attachment; filename="epick-chat-backup-${date}.json"`);
-  
-  // This line makes it work directly in browser when logged in as admin
-  return res.sendFile(DATA_FILE);
+  res.setHeader("Content-Disposition", `attachment; filename="epick-backup-${date}.json"`);
+  res.sendFile(DATA_FILE);
+});
+
+app.post("/admin/upload-data", requireAuth, upload.single("backup"), (req, res) => {
+  const user = store.users[req.session.user];
+  const auth = req.headers.authorization || "";
+
+  if (!user?.admin && auth !== ADMIN_BACKUP_PASSWORD) {
+    return res.status(403).send("Wrong password or not admin");
+  }
+
+  if (!req.file) {
+    return res.status(400).send("No file uploaded");
+  }
+
+  try {
+    const backupData = fs.readFileSync(req.file.path, "utf8");
+    const parsed = JSON.parse(backupData);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(parsed, null, 2));
+    console.log("Backup restored by", req.session.user);
+    fs.unlinkSync(req.file.path);
+
+    Object.assign(store, loadData());
+
+    return res.send("Backup restored successfully! Page will reload...");
+  } catch (err) {
+    console.error("Restore failed:", err);
+    try { fs.unlinkSync(req.file.path); } catch {}
+    return res.status(400).send("Invalid backup file (not valid JSON)");
+  }
 });
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, ()=>console.log(`Server running on port ${PORT}`));
