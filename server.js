@@ -298,7 +298,17 @@ app.post("/room-action", requireAuth, async (req, res) => {
         if (!room.banned.includes(target)) room.banned.push(target);
       }
       break;
-
+    case "setPrivacy":
+      if (["public", "friends", "invite"].includes(value)) {
+        room.inviteOnly = value === "public" ? false : value;
+      }
+      break;
+    
+    case "setCanPost":
+      if (["any", "friends", "owner"].includes(value)) {
+        room.canPost = value;
+      }
+      break;
     case "unban":
       if (target && room.banned) {
         room.banned = room.banned.filter(u => u !== target);
