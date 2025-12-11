@@ -6,55 +6,75 @@
 <script src="/socket.io/socket.io.js"></script>
 <style>
 :root{--bg:#0f1114;--panel:rgba(255,255,255,0.04);--muted:rgba(255,255,255,0.6);--accent:#6b8cff}
-*{box-sizing:border-box}
-body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#071021,#0f1114);color:#e8eefc}
-.navbar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-bottom:1px solid rgba(255,255,255,0.02)}
+*{box-sizing:border-box;margin:0}
+body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#071021,#0f1114);color:#e8eefc}
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-bottom:1px solid rgba(255,255,255,0.02)}
 .brand{font-weight:800;color:var(--accent);font-size:18px}
 .nav-actions{display:flex;gap:8px;align-items:center}
 .inbox-btn{position:relative;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);cursor:pointer}
 .inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--accent);color:#05102a;padding:2px 6px;border-radius:999px;font-weight:700;font-size:12px}
 .tabs{display:flex;gap:8px;margin:16px 12px}
 .tab{padding:10px 12px;border-radius:10px;background:transparent;cursor:pointer;color:var(--muted)}
-.tab.active{background:linear-gradient(90deg, rgba(107,140,255,0.12), rgba(107,140,255,0.06));color:#fff}
+.tab.active{background:linear-gradient(90deg,rgba(107,140,255,0.12),rgba(107,140,255,0.06));color:#fff}
 main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px}
 .panel{background:var(--panel);border-radius:12px;padding:12px;min-height:64vh;display:none;flex-direction:column;gap:12px}
 .panel.active{display:flex}
 .list{display:flex;flex-direction:column;gap:8px;max-height:56vh;overflow:auto;padding-right:6px}
-.list-item{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.005));cursor:pointer;transition:transform .08s}
+.list-item{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.015),rgba(255,255,255,0.005));cursor:pointer;transition:transform .08s}
 .list-item:hover{transform:translateY(-3px)}
 .pfp{width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.04)}
 .room-pfp{width:44px;height:44px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,0.04);margin-right:12px}
 .card-title{font-weight:700}
 .room-meta{font-size:12px;color:var(--muted);margin-top:4px}
-.chat-overlay{position:fixed;inset:0;background:linear-gradient(180deg, rgba(1,4,8,0.85), rgba(1,4,8,0.95));display:flex;flex-direction:column;z-index:1200;align-items:center;justify-content:center}
+.chat-overlay{position:fixed;inset:0;background:linear-gradient(180deg,rgba(1,4,8,0.85),rgba(1,4,8,0.95));display:flex;flex-direction:column;z-index:1200;align-items:center;justify-content:center}
 .chat-overlay.hidden{display:none}
 .chat-window{width:92%;max-width:1100px;height:84%;background:linear-gradient(180deg,#071021,#0f0f15);display:flex;flex-direction:column;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
 .chat-header{display:flex;align-items:center;justify-content:space-between;padding:14px;border-bottom:1px solid rgba(255,255,255,0.02)}
 .chat-title{display:flex;align-items:center;gap:12px;font-weight:700}
-.chat-messages{flex:1;padding:18px;overflow:auto;display:flex;flex-direction:column;gap:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent)}
-.chat-input{display:flex;gap:8px;padding:12px;border-top:1px solid rgba(255,255,255,0.02);background:linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0.01))}
+.chat-messages{flex:1;padding:18px;overflow:auto;display:flex;flex-direction:column;gap:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
+.chat-input{display:flex;gap:8px;padding:12px;border-top:1px solid rgba(255,255,255,0.02);background:linear-gradient(180deg,rgba(0,0,0,0.03),rgba(0,0,0,0.01))}
 .chat-input input{flex:1;padding:12px;border-radius:10px;background:rgba(255,255,255,0.02);color:#fff;border:1px solid rgba(255,255,255,0.03)}
 .chat-message{display:flex;gap:12px;align-items:flex-start}
-.chat-message .bubble{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:10px;border-radius:10px;max-width:78%}
-.chat-message.me .bubble{background:linear-gradient(180deg, rgba(107,140,255,0.16), rgba(107,140,255,0.08));align-self:flex-end}
-.bubble .meta{font-size:12px;color:var(--muted)}
+.chat-message .bubble{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:10px;border-radius:10px;max-width:78%}
+.chat-message.me .bubble{background:linear-gradient(180deg,rgba(107,140,255,0.16),rgba(107,140,255,0.08));align-self:flex-end}
+.bubble .meta{font-size:12px;color:var(--muted);cursor:pointer}
 .bubble .actions{margin-top:8px;font-size:12px;display:flex;gap:8px;color:var(--muted);cursor:pointer}
 .btn{padding:8px 12px;border-radius:8px;border:none;background:var(--accent);color:#05102a;cursor:pointer}
 .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
 .unread-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);margin-left:8px;flex-shrink:0}
 .inbox-panel{position:absolute;right:18px;top:56px;width:360px;background:linear-gradient(180deg,#071021,#0f0f15);border-radius:10px;padding:12px;z-index:1300;box-shadow:0 24px 80px rgba(0,0,0,0.6)}
 .inbox-item{display:flex;flex-direction:column;padding:10px;border-radius:8px;border-bottom:1px solid rgba(255,255,255,0.02);cursor:pointer}
-.inbox-item.unread{background:linear-gradient(90deg, rgba(107,140,255,0.04), rgba(107,140,255,0.01))}
-.small{font-size:13px;color:var(--muted)}
+.inbox-item.unread{background:linear-gradient(90deg,rgba(107,140,255,0.04),rgba(107,140,255,0.01))}
+
+/* USER PROFILE MODAL */
+#userProfileModal{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(12px);display:none}
+.profile-card{background:#11141d;width:420px;border-radius:16px;padding:28px;box-shadow:0 30px 80px rgba(0,0,0,0.7);color:#e8eefc;text-align:center}
+.profile-pfp{width:128px;height:128px;border-radius:50%;object-fit:cover;border:5px solid #6b8cff;margin-bottom:16px}
+.profile-name{font-size:26px;font-weight:800;margin:8px 0;color:#6b8cff}
+.profile-username{opacity:0.7;font-size:16px;margin-bottom:16px}
+.profile-bio{background:rgba(255,255,255,0.05);padding:16px;border-radius:12px;margin:20px 0;min-height:60px;font-size:15px;line-height:1.5}
+.close-btn{background:#ff4444;color:white;border:none;padding:12px 24px;border-radius:10px;cursor:pointer;font-weight:bold;margin-top:12px}
 </style>
 </head>
 <body>
+
 <div class="navbar">
   <div class="brand">Epick Chat</div>
   <div class="nav-actions">
     <button id="inboxBtn" class="inbox-btn">Inbox <span id="inboxBadge" class="inbox-badge" style="display:none">0</span></button>
     <button id="accountBtn" class="btn secondary">Account</button>
     <button id="logoutBtn" class="btn secondary">Logout</button>
+  </div>
+</div>
+
+<!-- USER PROFILE MODAL -->
+<div id="userProfileModal">
+  <div class="profile-card">
+    <img id="upPfp" class="profile-pfp" src="/avatars/default.png">
+    <div class="profile-name" id="upName">Loading...</div>
+    <div class="profile-username" id="upUsername"></div>
+    <div class="profile-bio" id="upBio">No bio set</div>
+    <button class="close-btn">Close</button>
   </div>
 </div>
 
@@ -98,15 +118,13 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
   </section>
 </main>
 
-<div id="chatOverlay" class="chat-overlay hidden" aria-hidden="true">
-  <div class="chat-window" role="dialog" aria-modal="true">
+<div id="chatOverlay" class="chat-overlay hidden">
+  <div class="chat-window">
     <div class="chat-header">
       <div id="chatTitle" class="chat-title">Chat</div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button id="closeChat" class="btn secondary">Close</button>
-      </div>
+      <button id="closeChat" class="btn secondary">Close</button>
     </div>
-    <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
+    <div id="chatMessages" class="chat-messages"></div>
     <div class="chat-input">
       <input id="chatInput" maxlength="300" placeholder="Type a message (Enter to send)">
       <button id="sendBtn" class="btn">Send</button>
@@ -120,14 +138,13 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
   let me = null, isAdmin = false, current = null;
   const unreadDMs = new Set();
 
-  // elements
+  // Elements
   const inboxBtn = document.getElementById('inboxBtn');
   const inboxBadge = document.getElementById('inboxBadge');
   const inboxPanel = document.getElementById('inboxPanel');
   const inboxList = document.getElementById('inboxList');
   const inboxEmpty = document.getElementById('inboxEmpty');
   const markAllReadBtn = document.getElementById('markAllRead');
-
   const tabs = document.querySelectorAll('.tab');
   const panels = document.querySelectorAll('.panel');
   const recentUsersDiv = document.getElementById('recentUsers');
@@ -135,392 +152,348 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
   const friendsListDiv = document.getElementById('friendsList');
   const roomsListDiv = document.getElementById('roomsList');
   const dmListDiv = document.getElementById('dmList');
-
   const chatOverlay = document.getElementById('chatOverlay');
-  const chatWindow = document.querySelector('.chat-window');
   const chatTitle = document.getElementById('chatTitle');
   const chatMessages = document.getElementById('chatMessages');
   const chatInput = document.getElementById('chatInput');
   const sendBtn = document.getElementById('sendBtn');
   const closeChatBtn = document.getElementById('closeChat');
 
-  function showBadge(n) { if(!n || n<=0) {inboxBadge.style.display='none'} else {inboxBadge.style.display=''; inboxBadge.textContent=String(n);} }
-  function showInboxPanel(show){ inboxPanel.style.display = show ? '' : 'none'; }
+  // Profile Modal
+  const profileModal = document.getElementById('userProfileModal');
+  const upPfp = document.getElementById('upPfp');
+  const upName = document.getElementById('upName');
+  const upUsername = document.getElementById('upUsername');
+  const upBio = document.getElementById('upBio');
+  profileModal.querySelector('.close-btn').onclick = () => profileModal.style.display = 'none';
 
-  inboxBtn.onclick = ()=>{ const visible = inboxPanel.style.display !== 'none'; showInboxPanel(!visible); if(!visible) loadInbox(); };
+  function showBadge(n){ if(!n||n<=0){inboxBadge.style.display='none'}else{inboxBadge.style.display='';inboxBadge.textContent=String(n)} }
 
-  markAllReadBtn.onclick = async ()=>{ await fetch('/inbox/mark-read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ id:'all' })}); await loadInbox(); };
+  inboxBtn.onclick = () => {
+    const v = inboxPanel.style.display !== 'none';
+    inboxPanel.style.display = v ? 'none' : '';
+    if (!v) loadInbox();
+  };
 
-  tabs.forEach(tab=>tab.addEventListener('click', ()=>{ tabs.forEach(t=>t.classList.remove('active')); panels.forEach(p=>p.classList.remove('active')); tab.classList.add('active'); document.getElementById(tab.dataset.tab).classList.add('active'); }));
+  markAllReadBtn.onclick = async() => {
+    await fetch('/inbox/mark-read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:'all'})});
+    await loadInbox();
+  };
 
-  document.getElementById('accountBtn').onclick = ()=> location.href = '/account.html';
-  document.getElementById('logoutBtn').onclick = async ()=> { await fetch('/logout',{method:'POST'}); location.href = '/login.html'; };
+  tabs.forEach(t=>t.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('active'));
+    panels.forEach(p=>p.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.tab).classList.add('active');
+  }));
 
-  async function api(path, opts={}) { try { const r = await fetch(path, opts); return await r.json(); } catch (e) { console.error('API error', path, e); return null; } }
+  document.getElementById('accountBtn').onclick = () => location.href = '/account.html';
+  document.getElementById('logoutBtn').onclick = async() => {
+    await fetch('/logout',{method:'POST'});
+    location.href='/login.html';
+  };
+
+  async function api(p,o={}){ try{const r=await fetch(p,o);return await r.json();}catch(e){console.error(e);return null;} }
 
   async function init(){
     const meRes = await api('/me');
-    if(!meRes || !meRes.loggedIn) return location.href = '/login.html';
+    if(!meRes||!meRes.loggedIn) return location.href='/login.html';
     me = meRes.username; isAdmin = !!meRes.admin;
     socket.emit('registerUser', me);
     await Promise.all([loadFriendsAndRecent(), loadRooms(), loadDMList()]);
     await loadInbox();
   }
 
-  // ---------- INBOX ----------
+  // USER PROFILE MODAL — CLICK ANY USERNAME TO OPEN
+  async function openUserProfile(username){
+    const res = await api('/me'); // reuse /me but add username param if you want public profiles
+    const user = await api(`/user-info/${username}`) || await api('/me'); // fallback
+    if(!user) return alert("User not found");
+
+    upPfp.src = user.avatar || "/avatars/default.png";
+    upName.textContent = user.displayName || username;
+    upUsername.textContent = "@" + username;
+    upBio.textContent = user.bio || "No bio set";
+    profileModal.style.display = "flex";
+  }
+
+  // Make username clickable in messages
+  function makeUsernameClickable(username, element){
+    const span = document.createElement('span');
+    span.textContent = username;
+    span.style.color = "#6b8cff";
+    span.style.cursor = "pointer";
+    span.onclick = (e)=>{ e.stopPropagation(); openUserProfile(username); };
+    element.innerHTML = '';
+    element.appendChild(span);
+  }
+
+  // INBOX
   async function loadInbox(){
-    const res = await api('/inbox'); if(!res || !res.success) { inboxList.innerHTML=''; inboxEmpty.style.display=''; showBadge(0); return; }
-    const notes = res.notifications || [];
-    inboxList.innerHTML = '';
-    if(notes.length === 0) inboxEmpty.style.display = ''; else inboxEmpty.style.display = 'none';
-    let unreadCount = 0;
+    const res = await api('/inbox');
+    if(!res||!res.success){ inboxList.innerHTML=''; inboxEmpty.style.display=''; showBadge(0); return; }
+    const notes = res.notifications||[];
+    inboxList.innerHTML='';
+    if(notes.length===0) inboxEmpty.style.display='';
+    else inboxEmpty.style.display='none';
+    let unread=0;
     notes.forEach(n=>{
-      if(!n.read) unreadCount++;
-      const item = document.createElement('div'); item.className='inbox-item' + (n.read ? '' : ' unread');
+      if(!n.read) unread++;
+      const item=document.createElement('div'); item.className='inbox-item'+(n.read?'':' unread');
       item.innerHTML = `<div style="display:flex;justify-content:space-between"><div style="font-weight:600">${n.type}</div><div style="font-size:12px;color:var(--muted)">${formatDate(n.time)}</div></div><div style="margin-top:6px;color:var(--muted);font-size:13px">${renderNotifText(n)}</div>`;
-      item.onclick = async ()=>{
-        await fetch('/inbox/mark-read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ id:n.id })});
-        if(n.type === 'dm' && n.payload && n.payload.from) openDM(n.payload.from);
-        if(n.type === 'friend_request') { document.querySelector('.tab[data-tab="friends"]').click(); loadFriendsAndRecent(); }
+      item.onclick=async()=>{ await fetch('/inbox/mark-read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:n.id})});
+        if(n.type==='dm'&&n.payload?.from) openDM(n.payload.from);
+        if(n.type==='friend_request') { document.querySelector('.tab[data-tab="friends"]').click(); loadFriendsAndRecent(); }
         await loadInbox();
       };
       inboxList.appendChild(item);
     });
-    showBadge(unreadCount);
+    showBadge(unread);
   }
+
   function renderNotifText(n){
-    if(n.type === 'dm') return `New DM from ${n.payload.from}`;
-    if(n.type === 'friend_request') return `Friend request from ${n.payload.from}`;
-    if(n.type === 'friend_accept') return `${n.payload.by} accepted your friend request`;
-    if(n.type === 'room_invite') return `${n.payload.by} invited you to ${n.payload.roomName}`;
-    return JSON.stringify(n.payload || {});
+    if(n.type==='dm') return `New DM from ${n.payload.from}`;
+    if(n.type==='friend_request') return `Friend request from ${n.payload.from}`;
+    if(n.type==='friend_accept') return `${n.payload.by} accepted your friend request`;
+    if(n.type==='room_invite') return `${n.payload.by} invited you to ${n.payload.roomName}`;
+    return JSON.stringify(n.payload||{});
   }
 
-  socket.on('inboxUpdate', n => {
-    if(inboxPanel.style.display !== 'none') loadInbox();
-    else {
-      const current = parseInt(inboxBadge.textContent || '0') || 0;
-      showBadge(current + 1);
-    }
-  });
+  socket.on('inboxUpdate',()=>{ if(inboxPanel.style.display!=='none')loadInbox(); else showBadge((parseInt(inboxBadge.textContent||'0')||0)+1); });
 
-  // ---------- FRIENDS ----------
+  // FRIENDS
   async function loadFriendsAndRecent(){
     const data = await api('/friends'); if(!data) return;
-    friendRequestsDiv.innerHTML = '';
+    friendRequestsDiv.innerHTML=''; friendsListDiv.innerHTML=''; recentUsersDiv.innerHTML='';
+
     (data.requests||[]).forEach(r=>{
-      const el = document.createElement('div'); el.className='list-item';
-      el.innerHTML = `<div>${r}</div><div><button class="btn secondary">Accept</button></div>`;
-      el.querySelector('button').onclick = async e=>{ e.stopPropagation(); await fetch('/accept-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ from:r })}); socket.emit('fetchFriends'); await loadFriendsAndRecent(); };
+      const el=document.createElement('div'); el.className='list-item';
+      el.innerHTML=`<div>${r}</div><div><button class="btn secondary">Accept</button></div>`;
+      el.querySelector('button').onclick=e=>{e.stopPropagation();fetch('/accept-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:r})}).then(()=>loadFriendsAndRecent());};
       friendRequestsDiv.appendChild(el);
     });
 
-    friendsListDiv.innerHTML = '';
     (data.friends||[]).forEach(f=>{
-      const el = document.createElement('div'); el.className='list-item';
-      el.innerHTML = `<div style="display:flex;align-items:center;gap:10px"><img src="${f.avatar||'/avatars/default.png'}" class="pfp"><div>${f.username}</div></div>`;
-      el.onclick = ()=> openDM(f.username);
+      const el=document.createElement('div'); el.className='list-item';
+      el.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><img src="${f.avatar||'/avatars/default.png'}" class="pfp"><div class="clickable-user">${f.username}</div></div>`;
+      el.onclick=()=>openUserProfile(f.username);
       friendsListDiv.appendChild(el);
     });
 
-    recentUsersDiv.innerHTML = '';
     (data.recent||[]).forEach(u=>{
-      const el = document.createElement('div'); el.className='list-item';
-      el.innerHTML = `<div style="display:flex;align-items:center;gap:10px"><img src="${u.avatar||'/avatars/default.png'}" class="pfp"><div>${u.username}</div></div><div><button class="btn secondary">Add</button></div>`;
-      el.querySelector('button').onclick = async e=>{ e.stopPropagation(); const resp = await fetch('/friend-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ to: u.username })}); const j = await resp.json(); alert(j.success ? 'Request sent' : j.message || 'Error'); await loadFriendsAndRecent(); };
+      const el=document.createElement('div'); el.className='list-item';
+      el.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><img src="${u.avatar||'/avatars/default.png'}" class="pfp"><div class="clickable-user">${u.username}</div></div><div><button class="btn secondary">Add</button></div>`;
+      el.querySelector('button').onclick=e=>{e.stopPropagation();fetch('/friend-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:u.username})}).then(()=>loadFriendsAndRecent());};
+      el.querySelector('.clickable-user').onclick=()=>openUserProfile(u.username);
       recentUsersDiv.appendChild(el);
     });
   }
 
-  // ---------- ROOMS ----------
+  // ROOMS
   async function loadRooms(){
     const data = await api('/rooms'); if(!data) return;
-    roomsListDiv.innerHTML = '';
-    Object.entries(data).forEach(([id, r])=>{
-      const el = document.createElement('div'); el.className='list-item';
-      const left = document.createElement('div'); left.style.display='flex'; left.style.alignItems='center';
-      const img = document.createElement('img'); img.className='room-pfp'; img.src = r.pfp || '/room_pfps/default.png';
-      const meta = document.createElement('div'); meta.innerHTML = `<div style="font-weight:700">${r.name}</div><div class="room-meta">${r.description||''}</div><div class="room-meta">owner: ${r.owner||'—'} · ${r.privacy||'public'}</div>`;
+    roomsListDiv.innerHTML='';
+    Object.entries(data).forEach(([id,r])=>{
+      const el=document.createElement('div'); el.className='list-item';
+      const left=document.createElement('div'); left.style.display='flex'; left.style.alignItems='center';
+      const img=document.createElement('img'); img.className='room-pfp'; img.src=r.pfp||'/room_pfps/default.png';
+      const meta=document.createElement('div');
+      meta.innerHTML=`<div style="font-weight:700">${r.name}</div><div class="room-meta">${r.description||''}</div><div class="room-meta">owner: <span class="clickable-user">${r.owner||'—'}</span> · ${r.privacy||'public'}</div>`;
       left.appendChild(img); left.appendChild(meta);
-      const right = document.createElement('div');
-      const joinBtn = document.createElement('button'); joinBtn.className='btn secondary'; joinBtn.textContent='Join';
-      joinBtn.onclick = ()=> openRoom(id, r.name);
+      const right=document.createElement('div');
+      const joinBtn=document.createElement('button'); joinBtn.className='btn secondary'; joinBtn.textContent='Join';
+      joinBtn.onclick=()=>openRoom(id,r.name);
       right.appendChild(joinBtn);
-      if (r.owner === me || isAdmin) {
-        const manage = document.createElement('button'); manage.className='btn secondary'; manage.textContent='Manage';
-        manage.onclick = (e)=>{ e.stopPropagation(); openRoomManageDialog(id, r); };
+      if(r.owner===me||isAdmin){
+        const manage=document.createElement('button'); manage.className='btn secondary'; manage.textContent='Manage';
+        manage.onclick=e=>{e.stopPropagation();openRoomManageDialog(id,r);};
         right.appendChild(manage);
       }
       el.appendChild(left); el.appendChild(right);
-      el.onclick = ()=> openRoom(id, r.name);
+      el.onclick=()=>openRoom(id,r.name);
       roomsListDiv.appendChild(el);
+
+      // Make owner name clickable
+      meta.querySelector('.clickable-user').onclick=e=>{e.stopPropagation();openUserProfile(r.owner);};
     });
   }
 
-  document.getElementById('createRoomBtn').onclick = async ()=>{
-    const name = (document.getElementById('roomName').value || '').trim();
+  document.getElementById('createRoomBtn').onclick = async()=>{
+    const name = document.getElementById('roomName').value.trim();
     if(!name) return alert('Enter a room name');
-    const res = await fetch('/create-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ name })});
+    const res = await fetch('/create-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});
     const j = await res.json();
-    if(j.success){ await loadRooms(); openRoom(j.roomId, name); socket.emit('roomsUpdated'); } else alert(j.message || 'Create failed');
+    if(j.success){ await loadRooms(); openRoom(j.roomId, name); } else alert(j.message||'Failed');
   };
 
-  // PERFECT ROOM MANAGE DIALOG — ALL SETTINGS NOW SAVE FOREVER
-  async function openRoomManageDialog(roomId, roomObj) {
-    // Fetch fresh room data from server so we have correct current values
+  // ROOM MANAGE (cleaned & working)
+  async function openRoomManageDialog(roomId, roomObj){
     const fresh = await api(`/room-info/${roomId}`);
-    if (!fresh?.success) return alert("Failed to load room info");
-  
-    const r = fresh; // use fresh data
-  
+    if(!fresh?.success) return alert("Failed to load room");
+    const r = fresh;
+
     const options = [
-      'Rename room',
-      'Set description',
-      'Set privacy (public / friends / invite)',
-      'Set posting permission (any / friends / owner)',
-      'Set pfp URL',
-      'Upload pfp file',
-      'Invite user',
-      'Ban user',
-      'Unban user'
+      'Rename room','Set description','Set privacy (public / invite)','Set posting permission (any / friends / owner)',
+      'Set pfp URL','Upload pfp file','Invite user','Ban user','Unban user'
     ];
-  
-    const pick = prompt(`Manage "${r.name}" — choose:\n${options.map((o,i)=>`${i+1}) ${o}`).join('\n')}\nEnter number:`);
-    if (!pick) return;
+
+    const pick = prompt(`Manage "${r.name}"\n${options.map((o,i)=>`${i+1}) ${o}`).join('\n')}\nEnter number:`);
+    if(!pick) return;
     const idx = Number(pick);
-    if (Number.isNaN(idx) || idx < 1 || idx > options.length) return;
-  
-    switch (idx) {
-      case 1: // Rename
-        const name = prompt('New name:', r.name);
-        if (name) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'setName', value:name.trim()})});
-        break;
-  
-      case 2: // Description
-        const desc = prompt('Description:', r.description || '');
-        if (desc !== null) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'setDescription', value:desc})});
-        break;
-  
-      case 3: {
-        const current = roomObj.inviteOnly ? 'invite' : 'public';
-        const v = prompt('Privacy (public / invite):', current);
-        if (v && ["public", "invite"].includes(v)) {
-          await fetch('/room-action', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ roomId, action: 'setPrivacy', value: v })
-          });
-        }
-        break;
-      }
-  
-      case 4: // Posting permission
-        const canPost = prompt('Who can post? (any / friends / owner):', r.canPost || 'any');
-        if (canPost) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'setCanPost', value:canPost})});
-        break;
-  
-      case 5: // PFP URL
-        const url = prompt('PFP URL:');
-        if (url) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'setPfp', value:url})});
-        break;
-  
-      case 6: // Upload PFP
-        const input = document.createElement('input'); 
-        input.type = 'file'; input.accept = 'image/*';
-        input.onchange = async () => {
-          if (!input.files[0]) return;
-          const fd = new FormData();
-          fd.append('pfp', input.files[0]);
-          fd.append('roomId', roomId);
-          const res = await fetch('/update-room-pfp', { method:'POST', body: fd });
-          const j = await res.json();
-          alert(j.success ? 'PFP updated!' : j.message || 'Failed');
-          loadRooms();
-        };
-        input.click();
-        return;
-  
-      case 7: // Invite user
-        const target = prompt('Username to invite:');
-        if (target) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'invite', target})});
-        break;
-  
-      case 8: // Ban user
-        const banTarget = prompt('Username to ban:');
-        if (banTarget) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'ban', target:banTarget})});
-        break;
-  
-      case 9: // Unban user
-        const unbanTarget = prompt('Username to unban:');
-        if (unbanTarget) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'unban', target:unbanTarget})});
-        break;
+    if(isNaN(idx)||idx<1||idx>options.length) return;
+
+    switch(idx){
+      case 1: const n=prompt('New name:',r.name); if(n)await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId,action:'setName',value:n.trim()})});break;
+      case 2: const d=prompt('Description:',r.description||''); if(d!==null)await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId,action:'setDescription',value:d})});break;
+      case 3: const p=prompt('Privacy (public / invite):',r.inviteOnly?'invite':'public'); if(p)await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId,action:'setPrivacy',value:p})});break;
+      case 4: const cp=prompt('Who can post? (any / friends / owner):',r.canPost||'any'); if(cp)await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId,action:'setCanPost',value:cp})});break;
+      case 5: const u=prompt('PFP URL:'); if(u)await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId,action:'setPfp',value:u})});break;
+      case 6: const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=async()=>{if(!i.files[0])return;const f=new FormData();f.append('pfp',i.files[0]);f.append('roomId',roomId);await fetch('/update-room-pfp',{method:'POST',body:f});loadRooms();};i.click();return;
+      case 7: const t=prompt('Username to invite:'); if(t)await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId,action:'invite',target:t})});break;
+      case 8: const b=prompt('Username to ban:'); if(b)await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId,action:'ban',target:b})});break;
+      case 9: const ub=prompt('Username to unban:'); if(ub)await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId,action:'unban',target:ub})});break;
     }
-  
-    // Refresh room list after any change
-    setTimeout(loadRooms, 300);
+    setTimeout(loadRooms,300);
   }
-  // ---------- DMs ----------
+
+  // DM LIST
   async function loadDMList(){
     const data = await api('/friends'); if(!data) return;
-    dmListDiv.innerHTML = '';
-    let friends = (data.friends||[]).map(f=>({ ...f, unread: unreadDMs.has(f.username) }));
-    friends.sort((a,b)=> (b.unread?1:0) - (a.unread?1:0));
+    dmListDiv.innerHTML='';
+    const friends = (data.friends||[]).map(f=>({...f,unread:unreadDMs.has(f.username)}));
+    friends.sort((a,b)=>(b.unread?1:0)-(a.unread?1:0));
     friends.forEach(f=>{
-      const el = document.createElement('div'); el.className='list-item';
-      el.innerHTML = `<div style="display:flex;align-items:center;gap:12px"><img src="${f.avatar||'/avatars/default.png'}" class="pfp"><div>@ ${f.username}</div>${f.unread?'<div class="unread-dot"></div>':''}</div>`;
-      el.onclick = ()=> openDM(f.username);
+      const el=document.createElement('div'); el.className='list-item';
+      el.innerHTML=`<div style="display:flex;align-items:center;gap:12px"><img src="${f.avatar||'/avatars/default.png'}" class="pfp"><div class="clickable-user">@ ${f.username}</div>${f.unread?'<div class="unread-dot"></div>':''}</div>`;
+      el.onclick=()=>openUserProfile(f.username);
       dmListDiv.appendChild(el);
     });
   }
 
-  // ---------- CHAT UI ----------
-  function formatDate(ts){ const d = new Date(ts||Date.now()); const optsTime = { hour:'numeric', minute:'2-digit' }; const timeStr = d.toLocaleTimeString([], optsTime); return `${timeStr}, ${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`; }
+  // CHAT
+  function formatDate(ts){ const d=new Date(ts||Date.now()); const t=d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}); return `${t}, ${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`; }
 
-  function setChatHeaderRoom(id, name, pfp) {
-    chatTitle.innerHTML = `<img src="${pfp||'/room_pfps/default.png'}" style="width:36px;height:36px;border-radius:8px;margin-right:8px"><span>${name}</span>`;
-  }
-
-  async function openRoom(id, name){
-    current = { type:'room', id, roomOwner: null };
-    const info = await api(`/room-info/${id}`);
-    setChatHeaderRoom(id, name, (info && info.success) ? info.pfp : '/room_pfps/default.png');
-    if(info && info.success) current.roomOwner = info.owner;
-    chatMessages.innerHTML = '';
-    chatOverlay.classList.remove('hidden'); chatOverlay.setAttribute('aria-hidden','false');
-    socket.emit('joinRoom',{ roomId: id });
+  async function openRoom(id,name){
+    current={type:'room',id,roomOwner:null};
+    const info=await api(`/room-info/${id}`);
+    chatTitle.innerHTML=`<img src="${(info?.pfp)||'/room_pfps/default.png'}" style="width:36px;height:36px;border-radius:8px;margin-right:8px"><span>${name}</span>`;
+    if(info?.success) current.roomOwner=info.owner;
+    chatMessages.innerHTML='';
+    chatOverlay.classList.remove('hidden');
+    socket.emit('joinRoom',{roomId:id});
   }
 
   async function openDM(username){
-    current = { type:'dm', id: username };
-    chatTitle.innerHTML = `<img src="/avatars/default.png" style="width:36px;height:36px;border-radius:50%;margin-right:8px"><span>@ ${username}</span>`;
-    chatMessages.innerHTML = '';
-    const r = await api(`/dm/${username}`);
-    if(r && r.success) (r.messages||[]).forEach(m=>appendMessage(m));
-    chatOverlay.classList.remove('hidden'); chatOverlay.setAttribute('aria-hidden','false');
+    current={type:'dm',id:username};
+    chatTitle.innerHTML=`<img src="/avatars/default.png" style="width:36px;height:36px;border-radius:50%;margin-right:8px"><span>@ ${username}</span>`;
+    chatMessages.innerHTML='';
+    const r=await api(`/dm/${username}`);
+    if(r?.success)(r.messages||[]).forEach(m=>appendMessage(m));
+    chatOverlay.classList.remove('hidden');
     unreadDMs.delete(username);
     loadDMList();
   }
 
   function createMessageElement(m){
-    const el = document.createElement('div'); el.className = 'chat-message' + (m.sender===me ? ' me' : '');
-    el.dataset.msgid = m.id;
-    const av = document.createElement('img'); av.src = m.avatar||'/avatars/default.png'; av.className='pfp';
-    const bubble = document.createElement('div'); bubble.className='bubble';
-    bubble.innerHTML = `<div class="meta">${m.sender} • ${formatDate(m.time)}</div><div style="margin-top:8px">${escapeHtml(m.message||'')}</div>`;
-    let allowDelete = (m.sender === me) || isAdmin;
-    if(current?.type === 'room' && current.roomOwner) {
-      if(current.roomOwner === me) allowDelete = true;
-    }
-    if(allowDelete) {
-      const actions = document.createElement('div'); actions.className='actions';
-      actions.innerHTML = `<span data-act="edit" style="cursor:pointer">Edit</span><span data-act="delete" style="cursor:pointer">Delete</span>`;
-      actions.onclick = async (e)=> {
-        const act = e.target.dataset.act;
-        if(act === 'edit') {
-          const newMsg = prompt('Edit message:', m.message);
-          if(newMsg !== null) {
-            await fetch('/edit-message',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: m.id, newMsg, dmWith: current?.type==='dm' ? current.id : undefined, roomId: current?.type==='room' ? current.id : undefined })});
-          }
+    const el=document.createElement('div'); el.className='chat-message'+(m.sender===me?' me':''); el.dataset.msgid=m.id;
+    const av=document.createElement('img'); av.src=m.avatar||'/avatars/default.png'; av.className='pfp';
+    const bubble=document.createElement('div'); bubble.className='bubble';
+
+    const nameSpan=document.createElement('span');
+    nameSpan.textContent=m.sender;
+    nameSpan.style.color="#6b8cff";
+    nameSpan.style.cursor="pointer";
+    nameSpan.onclick=e=>{e.stopPropagation(); openUserProfile(m.sender);};
+
+    bubble.innerHTML=`<div class="meta"></div><div style="margin-top:8px">${escapeHtml(m.message||'')}</div>`;
+    bubble.querySelector('.meta').appendChild(nameSpan);
+    bubble.querySelector('.meta').innerHTML += ` • ${formatDate(m.time)}`;
+
+    let allowDelete=(m.sender===me)||isAdmin;
+    if(current?.type==='room'&&current.roomOwner===me) allowDelete=true;
+    if(allowDelete){
+      const a=document.createElement('div'); a.className='actions';
+      a.innerHTML=`<span data-act="edit">Edit</span><span data-act="delete">Delete</span>`;
+      a.onclick=async e=>{
+        if(e.target.dataset.act==='edit'){
+          const nm=prompt('Edit message:',m.message);
+          if(nm!==null) await fetch('/edit-message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:m.id,newMsg:nm,dmWith:current?.type==='dm'?current.id:undefined,roomId:current?.type==='room'?current.id:undefined})});
         }
-        if(act === 'delete') {
-          if(confirm('Delete message?')) {
-            await fetch('/delete-message',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: m.id, dmWith: current?.type==='dm' ? current.id : undefined, roomId: current?.type==='room' ? current.id : undefined })});
-            const found = chatMessages.querySelector(`[data-msgid="${m.id}"]`); if(found) found.remove();
-          }
+        if(e.target.dataset.act==='delete'&&confirm('Delete message?')){
+          await fetch('/delete-message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:m.id,dmWith:current?.type==='dm'?current.id:undefined,roomId:current?.type==='room'?current.id:undefined})});
+          el.remove();
         }
       };
-      bubble.appendChild(actions);
+      bubble.appendChild(a);
     }
     el.appendChild(av); el.appendChild(bubble);
     return el;
   }
 
   function appendMessage(m){
-    if(!m || !m.id) return;
-    if(m.tempId) {
-      const optimistic = chatMessages.querySelector(`[data-msgid="${m.tempId}"]`);
-      if(optimistic) {
-        optimistic.dataset.msgid = m.id;
-        const bubble = optimistic.querySelector('.bubble');
-        if(bubble) bubble.innerHTML = `<div class="meta">${m.sender} • ${formatDate(m.time)}</div><div style="margin-top:8px">${escapeHtml(m.message||'')}</div>`;
-        const img = optimistic.querySelector('img.pfp'); if(img && m.avatar) img.src = m.avatar;
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+    if(!m||!m.id) return;
+    if(m.tempId){
+      const opt=chatMessages.querySelector(`[data-msgid="${m.tempId}"]`);
+      if(opt){
+        opt.dataset.msgid=m.id;
+        const b=opt.querySelector('.bubble');
+        if(b) b.innerHTML=`<div class="meta">${m.sender} • ${formatDate(m.time)}</div><div style="margin-top:8px">${escapeHtml(m.message||'')}</div>`;
+        const i=opt.querySelector('img.pfp'); if(i&&m.avatar) i.src=m.avatar;
+        chatMessages.scrollTop=chatMessages.scrollHeight;
         return;
       }
     }
     if(document.querySelector(`[data-msgid="${m.id}"]`)) return;
-    const el = createMessageElement(m);
+    const el=createMessageElement(m);
     chatMessages.appendChild(el);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    chatMessages.scrollTop=chatMessages.scrollHeight;
   }
 
   async function sendMessage(){
-    const txt = (chatInput.value || "").trim();
+    const txt=chatInput.value.trim();
     if(!txt) return;
     if(!current) return alert('Open a room or DM first');
-    if(current.type === 'room') {
-      socket.emit('roomMessage', { roomId: current.id, message: txt });
-    } else {
-      const tempId = 'temp-' + Date.now() + '-' + Math.floor(Math.random()*1000);
-      const tempMsg = { id: tempId, sender: me, avatar: null, message: txt, time: Date.now(), to: current.id };
-      appendMessage(tempMsg);
-      socket.emit('dmMessage', { to: current.id, message: txt, tempId });
+    if(current.type==='room'){
+      socket.emit('roomMessage',{roomId:current.id,message:txt});
+    }else{
+      const tempId='temp-'+Date.now()+'-'+Math.floor(Math.random()*1000);
+      const temp={id:tempId,sender:me,avatar:null,message:txt,time:Date.now(),to:current.id};
+      appendMessage(temp);
+      socket.emit('dmMessage',{to:current.id,message:txt,tempId});
     }
-    chatInput.value = '';
+    chatInput.value='';
   }
 
-  sendBtn.onclick = sendMessage;
-  chatInput.addEventListener('keydown', e=>{ if(e.key === 'Enter') sendMessage(); });
+  sendBtn.onclick=sendMessage;
+  chatInput.addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage();});
 
-  function closeChat() {
-    if(current?.type === 'room') socket.emit('leaveRoom', { roomId: current.id });
-    current = null;
+  function closeChat(){
+    if(current?.type==='room') socket.emit('leaveRoom',{roomId:current.id});
+    current=null;
     chatOverlay.classList.add('hidden');
-    chatOverlay.setAttribute('aria-hidden','true');
-    chatMessages.innerHTML = '';
+    chatMessages.innerHTML='';
   }
-  closeChatBtn.onclick = closeChat;
-  document.addEventListener('keydown', (e)=> { if(e.key === 'Escape') closeChat(); });
-  chatOverlay.addEventListener('click', (e)=> { if(e.target === chatOverlay) closeChat(); });
+  closeChatBtn.onclick=closeChat;
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeChat();});
+  chatOverlay.addEventListener('click',e=>{if(e.target===chatOverlay)closeChat();});
 
-  // socket events
-  socket.on('chatHistory', msgs => { chatMessages.innerHTML = ''; (msgs||[]).forEach(m => appendMessage(m)); });
-  socket.on('joinDenied', ({roomId, reason}) => { alert(`Cannot join room: ${reason}`); });
-  socket.on('roomMessage', m => { if(current?.type==='room' && current.id === m.roomId) appendMessage(m); });
-  socket.on('dmMessage', m => {
-    if(current?.type==='dm' && (current.id === m.sender || current.id === m.to)) appendMessage(m);
-    else {
-      const other = (m.sender === me) ? m.to : m.sender;
-      unreadDMs.add(other);
+  socket.on('chatHistory',msgs=>{chatMessages.innerHTML='';(msgs||[]).forEach(m=>appendMessage(m));});
+  socket.on('roomMessage',m=>{if(current?.type==='room'&&current.id===m.roomId)appendMessage(m);});
+  socket.on('dmMessage',m=>{
+    if(current?.type==='dm'&&(current.id===m.sender||current.id===m.to)) appendMessage(m);
+    else{
+      const o=(m.sender===me)?m.to:m.sender;
+      unreadDMs.add(o);
       loadDMList();
-      const curr = parseInt(inboxBadge.textContent||'0')||0; showBadge(curr+1);
+      showBadge((parseInt(inboxBadge.textContent||'0')||0)+1);
     }
   });
-  socket.on('kickedFromRoom', ({roomId, by, reason}) => {
-    if(current?.type==='room' && current.id === roomId) {
-      alert(`You were removed from the room by ${by}${reason?(' ('+reason+')'):''}`);
-      closeChat();
-    }
-  });
-  socket.on('friendsUpdate', ()=>{ loadFriendsAndRecent(); loadDMList(); });
-  socket.on('roomsUpdated', ()=> loadRooms());
-  socket.on('updateMessage', msg => {
-    const bubble2 = chatMessages.querySelector(`[data-msgid="${msg.id}"] .bubble div:nth-child(2)`);
-    if(bubble2) bubble2.textContent = msg.message || '';
-  });
-  socket.on('deleteMessage', id => {
-    const el = chatMessages.querySelector(`[data-msgid="${id}"]`);
-    if(el) el.remove();
-  });
+  socket.on('friendsUpdate',()=>{loadFriendsAndRecent();loadDMList();});
+  socket.on('roomsUpdated',()=>loadRooms());
 
-  socket.on('connect', ()=> socket.emit('fetchFriends'));
+  function escapeHtml(s){return (s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-  // helpers
-  function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-  // initial
   await init();
-
 })();
 </script>
 </body>
