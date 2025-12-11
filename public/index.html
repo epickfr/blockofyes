@@ -214,23 +214,33 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     await loadInbox();
   }
 
-  // OPEN USER PROFILE — FIXED TO SHOW REAL USER
+  // OPEN USER PROFILE — NOW SHOWS REAL BIO & AVATAR
   async function openUserProfile(username){
     if(username === me) return location.href = '/account.html';
 
-    // Get user info from friends or recent (real data)
+    // Get fresh user data from /friends endpoint (has bio, displayName, avatar)
     const friendsRes = await api('/friends');
-    let userData = null;
-    const all = [...(friendsRes.friends||[]), ...(friendsRes.recent||[])];
-    userData = all.find(u => u.username === username);
+    let user = null;
+    if(friendsRes){
+      const all = [...(friendsRes.friends||[]), ...(friendsRes.recent||[])];
+      user = all.find(u => u.username === username);
+    }
 
-    // Fallback if not found
-    if(!userData) userData = { username, avatar: "/avatars/default.png", displayName: username, bio: "No bio set" };
+    // Fallback: fetch from /me if same user (but we already checked)
+    if(!user){
+      const meData = await api('/me');
+      user = { username, avatar: "/avatars/default.png", displayName: username, bio: "No bio set" };
+      if(meData.username === username){
+        user.displayName = meData.displayName || username;
+        user.avatar = meData.avatar || "/avatars/default.png";
+        user.bio = meData.bio || "No bio set";
+      }
+    }
 
-    upPfp.src = userData.avatar || "/avatars/default.png";
-    upName.textContent = userData.displayName || username;
+    upPfp.src = user.avatar || "/avatars/default.png";
+    upName.textContent = user.displayName || username;
     upUsername.textContent = "@" + username;
-    upBio.textContent = userData.bio || "No bio set";
+    upBio.textContent = user.bio || "No bio set";
 
     currentProfileUser = username;
     msgBtn.onclick = () => {
@@ -252,44 +262,12 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     element.appendChild(span);
   }
 
-  // INBOX
-  async function loadInbox(){
-    const res = await api('/inbox');
-    if(!res||!res.success){ inboxList.innerHTML=''; inboxEmpty.style.display=''; showBadge(0); return; }
-    const notes = res.notifications||[];
-    inboxList.innerHTML='';
-    if(notes.length===0) inboxEmpty.style.display='';
-    else inboxEmpty.style.display='none';
-    let unread=0;
-    notes.forEach(n=>{
-      if(!n.read) unread++;
-      const item=document.createElement('div'); item.className='inbox-item'+(n.read?'':' unread');
-      item.innerHTML=`<div style="display:flex;justify-content:space-between"><div style="font-weight:600">${n.type}</div><div style="font-size:12px;color:var(--muted)">${formatDate(n.time)}</div></div><div style="margin-top:6px;color:var(--muted);font-size:13px">${renderNotifText(n)}</div>`;
-      item.onclick=async()=>{ await fetch('/inbox/mark-read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:n.id})});
-        if(n.type==='dm'&&n.payload?.from) openDM(n.payload.from);
-        if(n.type==='friend_request') { document.querySelector('.tab[data-tab="friends"]').click(); loadFriendsAndRecent(); }
-        await loadInbox();
-      };
-      inboxList.appendChild(item);
-    });
-    showBadge(unread);
-  }
-
-  function renderNotifText(n){
-    if(n.type==='dm') return `New DM from ${n.payload.from}`;
-    if(n.type==='friend_request') return `Friend request from ${n.payload.from}`;
-    if(n.type==='friend_accept') return `${n.payload.by} accepted your friend request`;
-    if(n.type==='room_invite') return `${n.payload.by} invited you to ${n.payload.roomName}`;
-    return JSON.stringify(n.payload||{});
-  }
-
-  socket.on('inboxUpdate',()=>{ if(inboxPanel.style.display!=='none')loadInbox(); else showBadge((parseInt(inboxBadge.textContent||'0')||0)+1); });
-
-  // FRIENDS & DM LIST
+  // FRIENDS & RECENT — FIXED: recent users only show non-friends
   async function loadFriendsAndRecent(){
     const data = await api('/friends'); if(!data) return;
     friendRequestsDiv.innerHTML=''; friendsListDiv.innerHTML=''; recentUsersDiv.innerHTML='';
 
+    // Friend Requests
     (data.requests||[]).forEach(r=>{
       const el=document.createElement('div'); el.className='list-item';
       el.innerHTML=`<div>${r}</div><div><button class="btn secondary">Accept</button></div>`;
@@ -297,18 +275,32 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       friendRequestsDiv.appendChild(el);
     });
 
-    const allUsers = [...(data.friends||[]), ...(data.recent||[])];
-    allUsers.forEach(u=>{
+    // Friends List
+    (data.friends||[]).forEach(f=>{
+      const el=document.createElement('div'); el.className='list-item';
+      el.innerHTML=`
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="${f.avatar||'/avatars/default.png'}" class="pfp">
+          <div class="clickable-user">${f.username}</div>
+        </div>
+      `;
+      el.onclick = () => openUserProfile(f.username);
+      friendsListDiv.appendChild(el);
+    });
+
+    // Recently Registered — ONLY NON-FRIENDS
+    (data.recent||[]).forEach(u=>{
       const el=document.createElement('div'); el.className='list-item';
       el.innerHTML=`
         <div style="display:flex;align-items:center;gap:10px">
           <img src="${u.avatar||'/avatars/default.png'}" class="pfp">
           <div class="clickable-user">${u.username}</div>
         </div>
-        ${unreadDMs.has(u.username)?'<div class="unread-dot"></div>':''}
+        <div><button class="btn secondary">Add Friend</button></div>
       `;
+      el.querySelector('button').onclick=e=>{e.stopPropagation();fetch('/friend-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:u.username})}).then(()=>loadFriendsAndRecent());};
       el.onclick = () => openUserProfile(u.username);
-      (u.isFriend ? friendsListDiv : dmListDiv).appendChild(el);
+      recentUsersDiv.appendChild(el);
     });
   }
 
@@ -347,7 +339,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     if(j.success){ await loadRooms(); openRoom(j.roomId,name); } else alert(j.message||'Failed');
   };
 
-  // ROOM MANAGE DIALOG
+  // ROOM MANAGE DIALOG (unchanged)
   async function openRoomManageDialog(roomId,roomObj){
     const fresh=await api(`/room-info/${roomId}`);
     if(!fresh?.success) return alert("Failed to load room");
