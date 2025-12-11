@@ -24,7 +24,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
 .list-item:hover{transform:translateY(-3px)}
 .pfp{width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.04)}
 .room-pfp{width:44px;height:44px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,0.04);margin-right:12px}
-.card-title{font-weight:700}
+.card-title{font-weight:700;margin-bottom:8px}
 .room-meta{font-size:12px;color:var(--muted);margin-top:4px}
 .chat-overlay{position:fixed;inset:0;background:linear-gradient(180deg,rgba(1,4,8,0.85),rgba(1,4,8,0.95));display:flex;flex-direction:column;z-index:1200;align-items:center;justify-content:center}
 .chat-overlay.hidden{display:none}
@@ -52,7 +52,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
 .profile-pfp{width:128px;height:128px;border-radius:50%;object-fit:cover;border:5px solid #6b8cff;margin-bottom:16px}
 .profile-name{font-size:26px;font-weight:800;margin:8px 0;color:#6b8cff}
 .profile-username{opacity:0.7;font-size:16px;margin-bottom:16px}
-.profile-bio{background:rgba(255,255,255,0.05);padding:16px;border-radius:12px;margin:20px 0;min-height:80px;font-size:15px;line-height:1.5;word-wrap:break-word}
+.profile-bio{background:rgba(255,255,255,255,0.05);padding:16px;border-radius:12px;margin:20px 0;min-height:80px;font-size:15px;line-height:1.5;word-wrap:break-word}
 .profile-actions{display:flex;gap:12px;margin-top:20px}
 .profile-actions button{flex:1;padding:14px;border:none;border-radius:10px;font-weight:bold;cursor:pointer}
 .msg-btn{background:#6b8cff;color:#000}
@@ -144,7 +144,6 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
   let me = null, isAdmin = false, current = null;
   const unreadDMs = new Set();
 
-  // Elements
   const inboxBtn = document.getElementById('inboxBtn');
   const inboxBadge = document.getElementById('inboxBadge');
   const inboxPanel = document.getElementById('inboxPanel');
@@ -214,27 +213,25 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     await loadInbox();
   }
 
-  // OPEN USER PROFILE — NOW SHOWS REAL BIO & AVATAR
+  // OPEN USER PROFILE — WORKS 100%
   async function openUserProfile(username){
     if(username === me) return location.href = '/account.html';
 
-    // Get fresh user data from /friends endpoint (has bio, displayName, avatar)
     const friendsRes = await api('/friends');
     let user = null;
+
     if(friendsRes){
       const all = [...(friendsRes.friends||[]), ...(friendsRes.recent||[])];
       user = all.find(u => u.username === username);
     }
 
-    // Fallback: fetch from /me if same user (but we already checked)
     if(!user){
-      const meData = await api('/me');
-      user = { username, avatar: "/avatars/default.png", displayName: username, bio: "No bio set" };
-      if(meData.username === username){
-        user.displayName = meData.displayName || username;
-        user.avatar = meData.avatar || "/avatars/default.png";
-        user.bio = meData.bio || "No bio set";
-      }
+      user = {
+        username,
+        avatar: "/avatars/default.png",
+        displayName: username,
+        bio: "No bio set"
+      };
     }
 
     upPfp.src = user.avatar || "/avatars/default.png";
@@ -262,10 +259,43 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     element.appendChild(span);
   }
 
-  // FRIENDS & RECENT — FIXED: recent users only show non-friends
+  // INBOX
+  async function loadInbox(){
+    const res = await api('/inbox');
+    if(!res||!res.success){ inboxList.innerHTML=''; inboxEmpty.style.display=''; showBadge(0); return; }
+    const notes = res.notifications||[];
+    inboxList.innerHTML='';
+    if(notes.length===0) inboxEmpty.style.display='';
+    else inboxEmpty.style.display='none';
+    let unread=0;
+    notes.forEach(n=>{
+      if(!n.read) unread++;
+      const item=document.createElement('div'); item.className='inbox-item'+(n.read?'':' unread');
+      item.innerHTML=`<div style="display:flex;justify-content:space-between"><div style="font-weight:600">${n.type}</div><div style="font-size:12px;color:var(--muted)">${formatDate(n.time)}</div></div><div style="margin-top:6px;color:var(--muted);font-size:13px">${renderNotifText(n)}</div>`;
+      item.onclick=async()=>{ await fetch('/inbox/mark-read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:n.id})});
+        if(n.type==='dm'&&n.payload?.from) openDM(n.payload.from);
+        if(n.type==='friend_request') { document.querySelector('.tab[data-tab="friends"]').click(); loadFriendsAndRecent(); }
+        await loadInbox();
+      };
+      inboxList.appendChild(item);
+    });
+    showBadge(unread);
+  }
+
+  function renderNotifText(n){
+    if(n.type==='dm') return `New DM from ${n.payload.from}`;
+    if(n.type==='friend_request') return `Friend request from ${n.payload.from}`;
+    if(n.type==='friend_accept') return `${n.payload.by} accepted your friend request`;
+    if(n.type==='room_invite') return `${n.payload.by} invited you to ${n.payload.roomName}`;
+    return JSON.stringify(n.payload||{});
+  }
+
+  socket.on('inboxUpdate',()=>{ if(inboxPanel.style.display!=='none')loadInbox(); else showBadge((parseInt(inboxBadge.textContent||'0')||0)+1); });
+
+  // FRIENDS & DM LIST — FIXED
   async function loadFriendsAndRecent(){
     const data = await api('/friends'); if(!data) return;
-    friendRequestsDiv.innerHTML=''; friendsListDiv.innerHTML=''; recentUsersDiv.innerHTML='';
+    friendRequestsDiv.innerHTML=''; friendsListDiv.innerHTML=''; recentUsersDiv.innerHTML=''; dmListDiv.innerHTML='';
 
     // Friend Requests
     (data.requests||[]).forEach(r=>{
@@ -275,20 +305,33 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       friendRequestsDiv.appendChild(el);
     });
 
-    // Friends List
+    // Friends → show in Friends tab + DM tab
     (data.friends||[]).forEach(f=>{
-      const el=document.createElement('div'); el.className='list-item';
-      el.innerHTML=`
+      // Friends list
+      const friendEl=document.createElement('div'); friendEl.className='list-item';
+      friendEl.innerHTML=`
         <div style="display:flex;align-items:center;gap:10px">
           <img src="${f.avatar||'/avatars/default.png'}" class="pfp">
           <div class="clickable-user">${f.username}</div>
         </div>
       `;
-      el.onclick = () => openUserProfile(f.username);
-      friendsListDiv.appendChild(el);
+      friendEl.onclick = () => openUserProfile(f.username);
+      friendsListDiv.appendChild(friendEl);
+
+      // DM list
+      const dmEl=document.createElement('div'); dmEl.className='list-item';
+      dmEl.innerHTML=`
+        <div style="display:flex;align-items:center;gap:12px">
+          <img src="${f.avatar||'/avatars/default.png'}" class="pfp">
+          <div class="clickable-user">@ ${f.username}</div>
+          ${unreadDMs.has(f.username)?'<div class="unread-dot"></div>':''}
+        </div>
+      `;
+      dmEl.onclick = () => openDM(f.username);
+      dmListDiv.appendChild(dmEl);
     });
 
-    // Recently Registered — ONLY NON-FRIENDS
+    // Recent users (non-friends)
     (data.recent||[]).forEach(u=>{
       const el=document.createElement('div'); el.className='list-item';
       el.innerHTML=`
@@ -339,7 +382,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     if(j.success){ await loadRooms(); openRoom(j.roomId,name); } else alert(j.message||'Failed');
   };
 
-  // ROOM MANAGE DIALOG (unchanged)
+  // ROOM MANAGE (unchanged)
   async function openRoomManageDialog(roomId,roomObj){
     const fresh=await api(`/room-info/${roomId}`);
     if(!fresh?.success) return alert("Failed to load room");
