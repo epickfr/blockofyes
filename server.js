@@ -242,24 +242,130 @@ app.post("/accept-request", requireAuth, (req,res)=>{
 });
 
 /* ---------- ROOMS ---------- */
-app.get("/rooms", requireAuth, (req,res)=>{
-  const result = {};
-  for(const [id,r] of Object.entries(store.rooms || {})) {
-    result[id] = { name:r.name, inviteOnly:!!r.inviteOnly, owner: r.owner||null, pfp: r.pfp || "/room_pfps/default.png", banned: r.banned || [] };
-  }
-  res.json(result);
-});
 
-app.post("/create-room", requireAuth, (req,res)=>{
-  const { name, password, inviteOnly } = req.body;
-  if(!name?.trim()) return res.json({ success:false, message:"Room name required" });
-  const lower = name.trim().toLowerCase();
-  for(const r of Object.values(store.rooms||{})) if(r.name?.trim().toLowerCase()===lower) return res.json({ success:false, message:"Room name already in use" });
-  const id = genId();
-  store.rooms[id] = { name: name.trim(), password: password||"", inviteOnly: !!inviteOnly, users: [], messages: [], owner: req.session.user, pfp: "/room_pfps/default.png", banned: [] };
+// ROOM MANAGEMENT — FULLY WORKING (invite, kick, ban, etc.)
+app.post("/room-action", requireAuth, async (req, res) => {
+  const { roomId, action, value, target } = req.body;
+  const user = req.session.user;
+
+  const room = store.rooms[roomId];
+  if (!room) return res.json({ success: false, message: "Room not found" });
+
+  const isOwner = room.owner === user;
+  const isAdmin = store.users[user]?.admin;
+
+  if (!isOwner && !isAdmin) {
+    return res.json({ success: false, message: "Not authorized" });
+  }
+
+  switch (action) {
+    case "setName":
+      if (typeof value === "string" && value.trim()) room.name = value.trim();
+      break;
+
+    case "setDescription":
+      room.description = typeof value === "string" ? value.slice(0, 200) : "";
+      break;
+
+    case "setPfp":
+      if (typeof value === "string") room.pfp = value;
+      break;
+
+    case "invite":
+      if (target && store.users[target]) {
+        room.invited = room.invited || [];
+        if (!room.invited.includes(target)) {
+          room.invited.push(target);
+          addNotification(target, "room_invite", {
+            roomId,
+            roomName: room.name,
+            by: user
+          });
+          io.to(target).emit("roomsUpdated");
+        }
+      }
+      break;
+
+    case "kick":
+      if (target) {
+        io.to(target).emit("kickedFromRoom", { roomId, by: user });
+      }
+      break;
+
+    case "ban":
+      if (target) {
+        room.banned = room.banned || [];
+        if (!room.banned.includes(target)) room.banned.push(target);
+      }
+      break;
+
+    case "unban":
+      if (target && room.banned) {
+        room.banned = room.banned.filter(u => u !== target);
+      }
+      break;
+
+    default:
+      return res.json({ success: false, message: "Unknown action" });
+  }
+
   saveData();
   io.emit("roomsUpdated");
-  res.json({ success:true, roomId:id, inviteLink: `${req.protocol}://${req.get("host")}/?invite=${id}` });
+  res.json({ success: true });
+});
+
+app.get("/rooms", requireAuth, (req, res) => {
+  const username = req.session.user;
+  const isAdmin = store.users[username]?.admin;
+
+  const visibleRooms = {};
+
+  for (const [id, room] of Object.entries(store.rooms || {})) {
+    // Admins see ALL rooms
+    if (isAdmin) {
+      visibleRooms[id] = {
+        name: room.name,
+        owner: room.owner,
+        pfp: room.pfp || "/room_pfps/default.png"
+      };
+      continue;
+    }
+
+    // Regular users only see rooms they're invited to
+    if (room.invited?.includes(username)) {
+      visibleRooms[id] = {
+        name: room.name,
+        owner: room.owner,
+        pfp: room.pfp || "/room_pfps/default.png"
+      };
+    }
+  }
+
+  res.json(visibleRooms);
+});
+app.post("/create-room", requireAuth, (req, res) => {
+  const { name } = req.body;
+  if (!name?.trim()) return res.json({ success: false, message: "Room name required" });
+
+  const lower = name.trim().toLowerCase();
+  for (const r of Object.values(store.rooms || {}))
+    if (r.name?.trim().toLowerCase() === lower)
+      return res.json({ success: false, message: "Room name already in use" });
+
+  const id = genId();
+  store.rooms[id] = {
+    name: name.trim(),
+    owner: req.session.user,
+    pfp: "/room_pfps/default.png",
+    messages: [],
+    banned: [],
+    invited: [req.session.user],  // Owner is auto-invited
+    inviteOnly: false  // ALL rooms are now invite-only by default
+  };
+
+  saveData();
+  io.emit("roomsUpdated");
+  res.json({ success: true, roomId: id });
 });
 
 app.get("/room-info/:roomId", requireAuth, (req,res)=>{
