@@ -5,12 +5,9 @@
 <title>Epick Chat</title>
 <script src="/socket.io/socket.io.js"></script>
 <style>
-:root{
-  --bg:#0f1114;--panel:rgba(255,255,255,0.04);--muted:rgba(255,255,255,0.6);
-  --accent:#6b8cff;--admin:#ff3366;--text:#e8eefc
-}
+:root{--bg:#0f1114;--panel:rgba(255,255,255,0.04);--muted:rgba(255,255,255,0.6);--accent:#6b8cff}
 *{box-sizing:border-box;margin:0}
-body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#071021,#0f1114);color:var(--text)}
+body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#071021,#0f1114);color:#e8eefc}
 .navbar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-bottom:1px solid rgba(255,255,255,0.02)}
 .brand{font-weight:800;color:var(--accent);font-size:18px}
 .nav-actions{display:flex;gap:8px;align-items:center}
@@ -25,7 +22,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
 .list{display:flex;flex-direction:column;gap:8px;max-height:56vh;overflow:auto;padding-right:6px}
 .list-item{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.015),rgba(255,255,255,0.005));cursor:pointer;transition:transform .08s}
 .list-item:hover{transform:translateY(-3px)}
-.pfp{width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.04);cursor:pointer}
+.pfp{width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.04)}
 .room-pfp{width:44px;height:44px;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,0.04);margin-right:12px}
 .card-title{font-weight:700;margin-bottom:8px}
 .room-meta{font-size:12px;color:var(--muted);margin-top:4px}
@@ -40,7 +37,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
 .chat-message{display:flex;gap:12px;align-items:flex-start}
 .chat-message .bubble{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:10px;border-radius:10px;max-width:78%}
 .chat-message.me .bubble{background:linear-gradient(180deg,rgba(107,140,255,0.16),rgba(107,140,255,0.08));align-self:flex-end}
-.bubble .meta{font-size:12px;color:var(--muted)}
+.bubble .meta{font-size:12px;color:var(--muted);cursor:pointer}
 .bubble .actions{margin-top:8px;font-size:12px;display:flex;gap:8px;color:var(--muted);cursor:pointer}
 .btn{padding:8px 12px;border-radius:8px;border:none;background:var(--accent);color:#05102a;cursor:pointer}
 .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
@@ -55,7 +52,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
 .profile-pfp{width:128px;height:128px;border-radius:50%;object-fit:cover;border:5px solid #6b8cff;margin-bottom:16px}
 .profile-name{font-size:26px;font-weight:800;margin:8px 0;color:#6b8cff}
 .profile-username{opacity:0.7;font-size:16px;margin-bottom:16px}
-.profile-bio{background:rgba(255,255,255,0.05);padding:16px;border-radius:12px;margin:20px 0;min-height:80px;font-size:15px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word}
+.profile-bio{background:rgba(255,255,255,255,0.05);padding:16px;border-radius:12px;margin:20px 0;min-height:80px;font-size:15px;line-height:1.5;word-wrap:break-word}
 .profile-actions{display:flex;gap:12px;margin-top:20px}
 .profile-actions button{flex:1;padding:14px;border:none;border-radius:10px;font-weight:bold;cursor:pointer}
 .msg-btn{background:#6b8cff;color:#000}
@@ -147,7 +144,6 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
   let me = null, isAdmin = false, current = null;
   const unreadDMs = new Set();
 
-  // Elements
   const inboxBtn = document.getElementById('inboxBtn');
   const inboxBadge = document.getElementById('inboxBadge');
   const inboxPanel = document.getElementById('inboxPanel');
@@ -217,7 +213,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     await loadInbox();
   }
 
-  // OPEN PROFILE — click avatar only
+  // OPEN USER PROFILE — WORKS 100%
   async function openUserProfile(username){
     if(username === me) return location.href = '/account.html';
 
@@ -252,13 +248,15 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     profileModal.style.display = 'flex';
   }
 
-  // RENDER USERNAME WITH ADMIN COLOR
-  function renderUsername(username, isAdmin = false){
+  // Make username clickable
+  function makeUsernameClickable(username, element){
+    element.innerHTML = '';
     const span = document.createElement('span');
     span.textContent = username;
-    span.style.color = isAdmin ? 'var(--admin)' : 'var(--text)';
-    span.style.fontWeight = isAdmin ? '800' : '600';
-    return span;
+    span.style.color = "#6b8cff";
+    span.style.cursor = "pointer";
+    span.onclick = e => { e.stopPropagation(); openUserProfile(username); };
+    element.appendChild(span);
   }
 
   // INBOX
@@ -294,11 +292,12 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
 
   socket.on('inboxUpdate',()=>{ if(inboxPanel.style.display!=='none')loadInbox(); else showBadge((parseInt(inboxBadge.textContent||'0')||0)+1); });
 
-  // FRIENDS & DM LIST
+  // FRIENDS & DM LIST — FIXED
   async function loadFriendsAndRecent(){
     const data = await api('/friends'); if(!data) return;
     friendRequestsDiv.innerHTML=''; friendsListDiv.innerHTML=''; recentUsersDiv.innerHTML=''; dmListDiv.innerHTML='';
 
+    // Friend Requests
     (data.requests||[]).forEach(r=>{
       const el=document.createElement('div'); el.className='list-item';
       el.innerHTML=`<div>${r}</div><div><button class="btn secondary">Accept</button></div>`;
@@ -306,35 +305,43 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       friendRequestsDiv.appendChild(el);
     });
 
+    // Friends → show in Friends tab + DM tab
     (data.friends||[]).forEach(f=>{
-      const el=document.createElement('div'); el.className='list-item';
-      el.innerHTML=`
+      // Friends list
+      const friendEl=document.createElement('div'); friendEl.className='list-item';
+      friendEl.innerHTML=`
         <div style="display:flex;align-items:center;gap:10px">
           <img src="${f.avatar||'/avatars/default.png'}" class="pfp">
-          <div></div>
+          <div class="clickable-user">${f.username}</div>
         </div>
       `;
-      const nameDiv = el.querySelector('div > div');
-      nameDiv.appendChild(renderUsername(f.username, f.isAdmin||false));
-      el.querySelector('.pfp').onclick = e => { e.stopPropagation(); openUserProfile(f.username); };
-      el.onclick = () => openDM(f.username);
-      friendsListDiv.appendChild(el);
-      dmListDiv.appendChild(el.cloneNode(true));
+      friendEl.onclick = () => openUserProfile(f.username);
+      friendsListDiv.appendChild(friendEl);
+
+      // DM list
+      const dmEl=document.createElement('div'); dmEl.className='list-item';
+      dmEl.innerHTML=`
+        <div style="display:flex;align-items:center;gap:12px">
+          <img src="${f.avatar||'/avatars/default.png'}" class="pfp">
+          <div class="clickable-user">@ ${f.username}</div>
+          ${unreadDMs.has(f.username)?'<div class="unread-dot"></div>':''}
+        </div>
+      `;
+      dmEl.onclick = () => openDM(f.username);
+      dmListDiv.appendChild(dmEl);
     });
 
+    // Recent users (non-friends)
     (data.recent||[]).forEach(u=>{
       const el=document.createElement('div'); el.className='list-item';
       el.innerHTML=`
         <div style="display:flex;align-items:center;gap:10px">
           <img src="${u.avatar||'/avatars/default.png'}" class="pfp">
-          <div></div>
+          <div class="clickable-user">${u.username}</div>
         </div>
         <div><button class="btn secondary">Add Friend</button></div>
       `;
-      const nameDiv = el.querySelector('div > div');
-      nameDiv.appendChild(renderUsername(u.username, u.isAdmin||false));
-      el.querySelector('.pfp').onclick = e => { e.stopPropagation(); openUserProfile(u.username); };
-      el.querySelector('button').onclick = e => { e.stopPropagation(); fetch('/friend-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:u.username})}).then(()=>loadFriendsAndRecent()); };
+      el.querySelector('button').onclick=e=>{e.stopPropagation();fetch('/friend-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:u.username})}).then(()=>loadFriendsAndRecent());};
       el.onclick = () => openUserProfile(u.username);
       recentUsersDiv.appendChild(el);
     });
@@ -349,9 +356,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       const left=document.createElement('div'); left.style.display='flex'; left.style.alignItems='center';
       const img=document.createElement('img'); img.className='room-pfp'; img.src=r.pfp||'/room_pfps/default.png';
       const meta=document.createElement('div');
-      meta.innerHTML=`<div style="font-weight:700">${r.name}</div><div class="room-meta">${r.description||''}</div><div class="room-meta">owner: <span></span> · ${r.inviteOnly?'invite-only':'public'}</div>`;
-      const ownerSpan = meta.querySelector('span');
-      ownerSpan.appendChild(renderUsername(r.owner||'—', store.users[r.owner]?.admin||false));
+      meta.innerHTML=`<div style="font-weight:700">${r.name}</div><div class="room-meta">${r.description||''}</div><div class="room-meta">owner: <span class="clickable-user">${r.owner||'—'}</span> · ${r.inviteOnly?'invite-only':'public'}</div>`;
       left.appendChild(img); left.appendChild(meta);
       const right=document.createElement('div');
       const joinBtn=document.createElement('button'); joinBtn.className='btn secondary'; joinBtn.textContent='Join';
@@ -365,7 +370,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       el.appendChild(left); el.appendChild(right);
       el.onclick=()=>openRoom(id,r.name);
       roomsListDiv.appendChild(el);
-      ownerSpan.onclick=e=>{e.stopPropagation();openUserProfile(r.owner);};
+      meta.querySelector('.clickable-user').onclick=e=>{e.stopPropagation();openUserProfile(r.owner);};
     });
   }
 
@@ -377,7 +382,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     if(j.success){ await loadRooms(); openRoom(j.roomId,name); } else alert(j.message||'Failed');
   };
 
-  // ROOM MANAGE DIALOG (unchanged)
+  // ROOM MANAGE (unchanged)
   async function openRoomManageDialog(roomId,roomObj){
     const fresh=await api(`/room-info/${roomId}`);
     if(!fresh?.success) return alert("Failed to load room");
@@ -430,11 +435,14 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
   function createMessageElement(m){
     const el=document.createElement('div'); el.className='chat-message'+(m.sender===me?' me':''); el.dataset.msgid=m.id;
     const av=document.createElement('img'); av.src=m.avatar||'/avatars/default.png'; av.className='pfp';
-    av.onclick = e => { e.stopPropagation(); openUserProfile(m.sender); };
-
     const bubble=document.createElement('div'); bubble.className='bubble';
 
-    const nameSpan = renderUsername(m.sender, m.isAdmin||false);
+    const nameSpan=document.createElement('span');
+    nameSpan.textContent=m.sender;
+    nameSpan.style.color="#6b8cff";
+    nameSpan.style.cursor="pointer";
+    nameSpan.onclick=e=>{e.stopPropagation(); openUserProfile(m.sender);};
+
     const meta=document.createElement('div'); meta.className='meta';
     meta.appendChild(nameSpan);
     meta.innerHTML += ` • ${formatDate(m.time)}`;
@@ -442,7 +450,6 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     bubble.appendChild(meta);
     bubble.innerHTML += `<div style="margin-top:8px">${escapeHtml(m.message||'')}</div>`;
 
-    // edit/delete
     let allowDelete=(m.sender===me)||isAdmin;
     if(current?.type==='room'&&current.roomOwner===me) allowDelete=true;
     if(allowDelete){
