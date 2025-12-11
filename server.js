@@ -202,12 +202,24 @@ app.post("/unblock", requireAuth, (req,res)=>{
 app.get("/friends", requireAuth, (req,res)=>{
   const username = req.session.user;
   const requests = store.friendRequests[username] || [];
-  store.users[username].friends = Array.from(new Set(store.users[username].friends || []));
-  const friends = (store.users[username].friends || []).map(f=>({ username: f, avatar: store.users[f]?.avatar || "/avatars/default.png" }));
-  const recent = Object.values(store.users).filter(u=>u.username !== username && !store.users[username].friends.includes(u.username)).sort((a,b)=>b.createdAt - a.createdAt).slice(0,10).map(u=>({ username:u.username, avatar:u.avatar||"/avatars/default.png" }));
+  const friends = (store.users[username].friends || []).map(f=>({
+    username: f,
+    avatar: store.users[f]?.avatar || "/avatars/default.png",
+    displayName: store.users[f]?.displayName || f,
+    bio: store.users[f]?.bio || ""
+  }));
+  const recent = Object.values(store.users)
+    .filter(u=>u.username !== username && !store.users[username].friends?.includes(u.username))
+    .sort((a,b)=>b.createdAt - a.createdAt)
+    .slice(0,20)
+    .map(u=>({
+      username: u.username,
+      avatar: u.avatar || "/avatars/default.png",
+      displayName: u.displayName || u.username,
+      bio: u.bio || ""
+    }));
   res.json({ requests, friends, recent });
 });
-
 app.post("/friend-request", requireAuth, (req,res)=>{
   const from = req.session.user, to = req.body.to;
   if(!to || !store.users[to]) return res.json({ success:false, message:"User not found" });
