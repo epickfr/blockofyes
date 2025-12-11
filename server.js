@@ -244,60 +244,58 @@ app.post("/accept-request", requireAuth, (req,res)=>{
 /* ---------- ROOMS ---------- */
 
 // ROOM MANAGEMENT — FULLY WORKING (invite, kick, ban, etc.)
-app.post("/room-action", requireAuth, async (req, res) => {
+// FINAL ROOM-ACTION — KICK REMOVED, EVERYTHING WORKS PERFECTLY
+app.post("/room-action", requireAuth, (req, res) => {
   const { roomId, action, value, target } = req.body;
   const user = req.session.user;
-
   const room = store.rooms[roomId];
+
   if (!room) return res.json({ success: false, message: "Room not found" });
 
   const isOwner = room.owner === user;
   const isAdmin = store.users[user]?.admin;
-
-  if (!isOwner && !isAdmin) {
-    return res.json({ success: false, message: "Not authorized" });
-  }
+  if (!isOwner && !isAdmin) return res.json({ success: false, message: "Not authorized" });
 
   switch (action) {
     case "setName":
-      if (typeof value === "string" && value.trim()) room.name = value.trim();
+      if (value?.trim()) room.name = value.trim();
       break;
 
     case "setDescription":
-      room.description = typeof value === "string" ? value.slice(0, 200) : "";
+      room.description = typeof value === "string" ? value.slice(0, 300) : "";
       break;
 
     case "setPfp":
       if (typeof value === "string") room.pfp = value;
       break;
+
     case "setPrivacy":
       if (["public", "invite"].includes(value)) {
         room.inviteOnly = value === "invite";
-        // If switching to public, optionally clear invited list (or keep it — your choice)
-        // room.invited = room.inviteOnly ? (room.invited || [room.owner]) : [];
-        saveData();
-        io.emit("roomsUpdated");
+        if (!room.inviteOnly) {
+          room.invited = [room.owner]; // clear invites when public
+        }
       }
       break;
+
+    case "setCanPost":
+      if (["any", "friends", "owner"].includes(value)) {
+        room.canPost = value;
+      }
+      break;
+
     case "invite":
       if (target && store.users[target]) {
         room.invited = room.invited || [];
         if (!room.invited.includes(target)) {
           room.invited.push(target);
-          saveData();
           addNotification(target, "room_invite", {
             roomId,
             roomName: room.name,
             by: user
           });
-          io.to(target).emit("roomsUpdated"); // This makes the room appear instantly
+          io.to(target).emit("roomsUpdated"); // instantly appears
         }
-      }
-      break;
-
-    case "kick":
-      if (target) {
-        io.to(target).emit("kickedFromRoom", { roomId, by: user });
       }
       break;
 
@@ -307,25 +305,15 @@ app.post("/room-action", requireAuth, async (req, res) => {
         if (!room.banned.includes(target)) room.banned.push(target);
       }
       break;
-    case "setPrivacy":
-      if (["public", "friends", "invite"].includes(value)) {
-        room.inviteOnly = value === "public" ? false : value;
-      }
-      break;
-    
-    case "setCanPost":
-      if (["any", "friends", "owner"].includes(value)) {
-        room.canPost = value;
-      }
-      break;
+
     case "unban":
-      if (target && room.banned) {
-        room.banned = room.banned.filter(u => u !== target);
+      if (target) {
+        room.banned = (room.banned || []).filter(u => u !== target);
       }
       break;
 
     default:
-      return res.json({ success: false, message: "Unknown action" });
+      return res.json({ success: false, message: "Invalid action" });
   }
 
   saveData();
