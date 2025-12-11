@@ -58,7 +58,6 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
 .msg-btn{background:#6b8cff;color:#000}
 .close-btn{background:#ff4444;color:white}
 </style>
-</style>
 </head>
 <body>
 
@@ -215,30 +214,18 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     await loadInbox();
   }
 
-  // OPEN USER PROFILE — WORKS 100%
+  // OPEN USER PROFILE — FIXED TO SHOW REAL USER
   async function openUserProfile(username){
     if(username === me) return location.href = '/account.html';
 
-    const res = await api('/me');
-    const myData = await res.json();
-
-    // Try to get real user info (from friends list or recent)
+    // Get user info from friends or recent (real data)
+    const friendsRes = await api('/friends');
     let userData = null;
-    try {
-      const friendsRes = await api('/friends');
-      const all = [...(friendsRes.friends||[]), ...(friendsRes.recent||[])];
-      userData = all.find(u => u.username === username) || null;
-    } catch(e) {}
+    const all = [...(friendsRes.friends||[]), ...(friendsRes.recent||[])];
+    userData = all.find(u => u.username === username);
 
-    // Fallback: just use what we have from messages
-    if(!userData) {
-      userData = { username, avatar: "/avatars/default.png", displayName: username, bio: "No bio set" };
-    }
-
-    // Final fallback from /me (only if same user)
-    if(!userData.avatar) userData.avatar = myData.avatar;
-    if(!userData.displayName) userData.displayName = myData.displayName || username;
-    if(!userData.bio) userData.bio = myData.bio || "No bio set";
+    // Fallback if not found
+    if(!userData) userData = { username, avatar: "/avatars/default.png", displayName: username, bio: "No bio set" };
 
     upPfp.src = userData.avatar || "/avatars/default.png";
     upName.textContent = userData.displayName || username;
@@ -360,7 +347,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     if(j.success){ await loadRooms(); openRoom(j.roomId,name); } else alert(j.message||'Failed');
   };
 
-  // ROOM MANAGE DIALOG (unchanged except privacy prompt fixed)
+  // ROOM MANAGE DIALOG
   async function openRoomManageDialog(roomId,roomObj){
     const fresh=await api(`/room-info/${roomId}`);
     if(!fresh?.success) return alert("Failed to load room");
