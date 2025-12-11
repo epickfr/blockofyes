@@ -276,12 +276,13 @@ app.post("/room-action", requireAuth, async (req, res) => {
         room.invited = room.invited || [];
         if (!room.invited.includes(target)) {
           room.invited.push(target);
+          saveData();
           addNotification(target, "room_invite", {
             roomId,
             roomName: room.name,
             by: user
           });
-          io.to(target).emit("roomsUpdated");
+          io.to(target).emit("roomsUpdated"); // This makes the room appear instantly
         }
       }
       break;
@@ -331,22 +332,35 @@ app.get("/rooms", requireAuth, (req, res) => {
   const visibleRooms = {};
 
   for (const [id, room] of Object.entries(store.rooms || {})) {
-    // Admins see ALL rooms
+    // Admins see everything
     if (isAdmin) {
       visibleRooms[id] = {
         name: room.name,
         owner: room.owner,
-        pfp: room.pfp || "/room_pfps/default.png"
+        pfp: room.pfp || "/room_pfps/default.png",
+        privacy: room.inviteOnly ? (room.inviteOnly === 'friends' ? 'friends' : 'invite') : 'public'
       };
       continue;
     }
 
-    // Regular users only see rooms they're invited to
+    // Owner always sees their room
+    if (room.owner === username) {
+      visibleRooms[id] = {
+        name: room.name,
+        owner: room.owner,
+        pfp: room.pfp || "/room_pfps/default.png",
+        privacy: room.inviteOnly ? (room.inviteOnly === 'friends' ? 'friends' : 'invite') : 'public'
+      };
+      continue;
+    }
+
+    // Invited users see the room
     if (room.invited?.includes(username)) {
       visibleRooms[id] = {
         name: room.name,
         owner: room.owner,
-        pfp: room.pfp || "/room_pfps/default.png"
+        pfp: room.pfp || "/room_pfps/default.png",
+        privacy: room.inviteOnly ? (room.inviteOnly === 'friends' ? 'friends' : 'invite') : 'public'
       };
     }
   }
