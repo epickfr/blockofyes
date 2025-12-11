@@ -270,7 +270,15 @@ app.post("/room-action", requireAuth, async (req, res) => {
     case "setPfp":
       if (typeof value === "string") room.pfp = value;
       break;
-
+    case "setPrivacy":
+      if (["public", "invite"].includes(value)) {
+        room.inviteOnly = value === "invite";
+        // If switching to public, optionally clear invited list (or keep it — your choice)
+        // room.invited = room.inviteOnly ? (room.invited || [room.owner]) : [];
+        saveData();
+        io.emit("roomsUpdated");
+      }
+      break;
     case "invite":
       if (target && store.users[target]) {
         room.invited = room.invited || [];
@@ -329,43 +337,34 @@ app.get("/rooms", requireAuth, (req, res) => {
   const username = req.session.user;
   const isAdmin = store.users[username]?.admin;
 
-  const visibleRooms = {};
+  const visible = {};
 
   for (const [id, room] of Object.entries(store.rooms || {})) {
-    // Admins see everything
+    // 1. Admins see EVERY room
     if (isAdmin) {
-      visibleRooms[id] = {
-        name: room.name,
-        owner: room.owner,
-        pfp: room.pfp || "/room_pfps/default.png",
-        privacy: room.inviteOnly ? (room.inviteOnly === 'friends' ? 'friends' : 'invite') : 'public'
-      };
+      visible[id] = { name: room.name, owner: room.owner, pfp: room.pfp || "/room_pfps/default.png" };
       continue;
     }
 
-    // Owner always sees their room
+    // 2. Owner always sees their room
     if (room.owner === username) {
-      visibleRooms[id] = {
-        name: room.name,
-        owner: room.owner,
-        pfp: room.pfp || "/room_pfps/default.png",
-        privacy: room.inviteOnly ? (room.inviteOnly === 'friends' ? 'friends' : 'invite') : 'public'
-      };
+      visible[id] = { name: room.name, owner: room.owner, pfp: room.pfp || "/room_pfps/default.png" };
       continue;
     }
 
-    // Invited users see the room
+    // 3. PUBLIC rooms = everyone sees
+    if (!room.inviteOnly) {
+      visible[id] = { name: room.name, owner: room.owner, pfp: room.pfp || "/room_pfps/default.png" };
+      continue;
+    }
+
+    // 4. INVITE-ONLY rooms = only invited users see
     if (room.invited?.includes(username)) {
-      visibleRooms[id] = {
-        name: room.name,
-        owner: room.owner,
-        pfp: room.pfp || "/room_pfps/default.png",
-        privacy: room.inviteOnly ? (room.inviteOnly === 'friends' ? 'friends' : 'invite') : 'public'
-      };
+      visible[id] = { name: room.name, owner: room.owner, pfp: room.pfp || "/room_pfps/default.png" };
     }
   }
 
-  res.json(visibleRooms);
+  res.json(visible);
 });
 app.post("/create-room", requireAuth, (req, res) => {
   const { name } = req.body;
