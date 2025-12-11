@@ -282,8 +282,7 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       'Upload pfp file',
       'Invite user',
       'Ban user',
-      'Unban user',
-      'Kick user',
+      'Unban user'
     ];
   
     const pick = prompt(`Manage "${r.name}" — choose:\n${options.map((o,i)=>`${i+1}) ${o}`).join('\n')}\nEnter number:`);
@@ -302,10 +301,18 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
         if (desc !== null) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'setDescription', value:desc})});
         break;
   
-      case 3: // Privacy
-        const privacy = prompt('Privacy (public / friends / invite):', r.inviteOnly ? (r.inviteOnly === 'friends' ? 'friends' : 'invite') : 'public') || 'public';
-        await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'setPrivacy', value:privacy})});
+      case 3: {
+        const current = roomObj.inviteOnly ? 'invite' : 'public';
+        const v = prompt('Privacy (public / invite):', current);
+        if (v && ["public", "invite"].includes(v)) {
+          await fetch('/room-action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ roomId, action: 'setPrivacy', value: v })
+          });
+        }
         break;
+      }
   
       case 4: // Posting permission
         const canPost = prompt('Who can post? (any / friends / owner):', r.canPost || 'any');
@@ -346,11 +353,6 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       case 9: // Unban user
         const unbanTarget = prompt('Username to unban:');
         if (unbanTarget) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'unban', target:unbanTarget})});
-        break;
-  
-      case 10: // Kick user
-        const kickTarget = prompt('Username to kick:');
-        if (kickTarget) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'kick', target:kickTarget})});
         break;
     }
   
