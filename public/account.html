@@ -2,47 +2,138 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Account - Epick Chat</title>
+<title>Profile - Epick Chat</title>
 <style>
-  body{font-family:Arial;background:#071021;color:#e8eefc;padding:24px}
-  .card{background:rgba(255,255,255,0.03);padding:18px;border-radius:10px;max-width:540px}
-  .pfp{width:96px;height:96px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.06)}
-  input[type=file]{margin-top:10px}
-  button{margin-top:10px;padding:8px 12px;border-radius:8px;border:none;background:#6b8cff;color:#05102a;cursor:pointer}
+  body {
+    margin:0; font-family:system-ui,Arial,sans-serif;
+    background: linear-gradient(135deg, #071021, #0f1114);
+    color: #e8eefc; min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .card {
+    background: rgba(255,255,255,0.04);
+    border-radius: 16px; padding: 32px; width: 460px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .header {
+    text-align: center; margin-bottom: 28px;
+  }
+  .pfp {
+    width: 120px; height: 120px; border-radius: 50%;
+    object-fit: cover; border: 4px solid #6b8cff;
+    cursor: pointer; transition: 0.3s;
+  }
+  .pfp:hover { transform: scale(1.05); }
+  .username {
+    font-size: 28px; font-weight: 800; margin: 12px 0 4px 4px;
+    color: #6b8cff;
+  }
+  .tag { opacity: 0.7; font-size: 16px; }
+  .section {
+    margin: 24px 0;
+  }
+  label {
+    display: block; margin: 16px 0 8px;
+    font-weight: 600; font-size: 14px; opacity: 0.9;
+  }
+  input, textarea {
+    width: 100%; padding: 12px; border-radius: 10px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    color: #fff; font-size: 16px;
+  }
+  textarea { min-height: 100px; resize: vertical; }
+  .actions {
+    display: flex; gap: 12px; margin-top: 28px;
+  }
+  button {
+    flex: 1; padding: 14px; border: none; border-radius: 10px;
+    font-weight: bold; cursor: pointer; font-size: 16px;
+  }
+  .save { background: #6b8cff; color: #000; }
+  .back { background: rgba(255,255,255,0.1); color: #ccc; }
+  .back:hover { background: rgba(255,255,255,0.2); }
+  .save:hover { opacity: 0.9; }
 </style>
 </head>
 <body>
   <div class="card">
-    <h2>Account</h2>
-    <img id="pfp" class="pfp" src="/avatars/default.png">
-    <form id="avatarForm" enctype="multipart/form-data">
-      <input type="file" name="avatar" accept="image/*">
-      <button type="submit">Upload avatar (gif supported)</button>
-    </form>
-    <div style="margin-top:14px">
-      <button id="back">Back to chat</button>
+    <div class="header">
+      <img id="pfp" class="pfp" src="/avatars/default.png">
+      <div class="username" id="displayName">Loading...</div>
+      <div class="tag" id="username"></div>
+    </div>
+
+    <div class="section">
+      <label>Display Name</label>
+      <input type="text" id="inputName" maxlength="32" placeholder="Your cool name">
+    </div>
+
+    <div class="section">
+      <label>Bio</label>
+      <textarea id="inputBio" maxlength="200" placeholder="Tell the world about yourself..."></textarea>
+    </div>
+
+    <div class="section">
+      <label>Change Avatar (click image or upload)</label>
+      <input type="file" id="avatarInput" accept="image/*" style="display:none">
+    </div>
+
+    <div class="actions">
+      <button class="save" onclick="saveProfile()">Save Changes</button>
+      <button class="back" onclick="location.href='/'">Back to Chat</button>
     </div>
   </div>
 
-<script>
-async function init(){
-  const res = await fetch('/me');
-  const j = await res.json();
-  if(!j.loggedIn) return location.href='/login.html';
-  document.getElementById('pfp').src = j.avatar || '/avatars/default.png';
-}
-document.getElementById('avatarForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const fd = new FormData(e.target);
-  const res = await fetch('/update-avatar', { method:'POST', body: fd });
-  const j = await res.json();
-  if(j.success){
-    document.getElementById('pfp').src = j.avatar + '?t=' + Date.now();
-    alert('Avatar updated');
-  } else alert(j.message || 'Failed');
-});
-document.getElementById('back').onclick = () => location.href = '/';
-init();
-</script>
+  <script>
+    async function loadProfile() {
+      const res = await fetch('/me');
+      const j = await res.json();
+      if (!j.loggedIn) return location.href = '/login.html';
+
+      document.getElementById('pfp').src = j.avatar || '/avatars/default.png';
+      document.getElementById('displayName').textContent = j.displayName || j.username;
+      document.getElementById('username').textContent = '@' + j.username;
+      document.getElementById('inputName').value = j.displayName || j.username;
+      document.getElementById('inputBio').value = j.bio || '';
+    }
+
+    document.getElementById('pfp').onclick = () => {
+      document.getElementById('avatarInput').click();
+    };
+
+    document.getElementById('avatarInput').onchange = async (e) => {
+      if (!e.target.files[0]) return;
+      const fd = new FormData();
+      fd.append('avatar', e.target.files[0]);
+      const res = await fetch('/update-avatar', { method: 'POST', body: fd });
+      const j = await res.json();
+      if (j.success) {
+        document.getElementById('pfp').src = j.avatar + '?t=' + Date.now();
+        alert('Avatar updated!');
+      } else alert('Upload failed');
+    };
+
+    async function saveProfile() {
+      const displayName = document.getElementById('inputName').value.trim();
+      const bio = document.getElementById('inputBio').value.trim();
+
+      const res = await fetch('/set-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ displayName, bio })
+      });
+
+      if (res.ok) {
+        alert('Profile saved!');
+        loadProfile(); // refresh displayed name
+      } else {
+        alert('Save failed');
+      }
+    }
+
+    loadProfile();
+  </script>
 </body>
 </html>
