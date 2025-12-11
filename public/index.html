@@ -265,8 +265,14 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
     if(j.success){ await loadRooms(); openRoom(j.roomId, name); socket.emit('roomsUpdated'); } else alert(j.message || 'Create failed');
   };
 
-  // improved manage dialog
-  async function openRoomManageDialog(roomId, roomObj){
+  // PERFECT ROOM MANAGE DIALOG — ALL SETTINGS NOW SAVE FOREVER
+  async function openRoomManageDialog(roomId, roomObj) {
+    // Fetch fresh room data from server so we have correct current values
+    const fresh = await api(`/room-info/${roomId}`);
+    if (!fresh?.success) return alert("Failed to load room info");
+  
+    const r = fresh; // use fresh data
+  
     const options = [
       'Rename room',
       'Set description',
@@ -275,53 +281,82 @@ main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:6px 18px 24px
       'Set pfp URL',
       'Upload pfp file',
       'Invite user',
-      'Revoke invite',
       'Ban user',
       'Unban user',
       'Kick user',
     ];
-    const pick = prompt(`Manage "${roomObj.name}" — choose:\n${options.map((o,i)=>`${i+1}) ${o}`).join('\n')}\nEnter number:`);
-    if(!pick) return;
+  
+    const pick = prompt(`Manage "${r.name}" — choose:\n${options.map((o,i)=>`${i+1}) ${o}`).join('\n')}\nEnter number:`);
+    if (!pick) return;
     const idx = Number(pick);
-    if(Number.isNaN(idx) || idx < 1 || idx > options.length) return;
-    switch(idx){
-      case 1: {
-        const v = prompt('New room name:', roomObj.name); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'setName', value: v })}); break;
-      }
-      case 2: {
-        const v = prompt('Description:', roomObj.description||''); if(v!==null) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'setDescription', value: v })}); break;
-      }
-      case 3: {
-        const v = prompt('Privacy (public / friends / invite):', roomObj.privacy||'public'); if(v) { await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'setPrivacy', value: v })}); await loadRooms(); } break;
-      }
-      case 4: {
-        const v = prompt('Posting permission (any / friends / owner):', roomObj.canPost||'any'); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'setCanPost', value: v })}); break;
-      }
-      case 5: {
-        const v = prompt('PFP URL:'); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'setPfp', value: v })}); break;
-      }
-      case 6: {
-        const input = document.createElement('input'); input.type='file'; input.accept='image/*'; input.onchange = async ()=>{ if(!input.files || !input.files[0]) return; const fd = new FormData(); fd.append('pfp', input.files[0]); fd.append('roomId', roomId); const res = await fetch('/update-room-pfp', { method:'POST', body: fd }); const j = await res.json(); if(j.success) { alert('Uploaded'); loadRooms(); } else alert(j.message||'Failed'); }; input.click(); break;
-      }
-      case 7: {
-        const v = prompt('Username to invite:'); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'invite', target: v })}); break;
-      }
-      case 8: {
-        const v = prompt('Username to revoke invite:'); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'revoke-invite', target: v })}); break;
-      }
-      case 9: {
-        const v = prompt('Username to ban:'); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'ban', target: v })}).then(()=>loadRooms()); break;
-      }
-      case 10: {
-        const v = prompt('Username to unban:'); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'unban', target: v })}).then(()=>loadRooms()); break;
-      }
-      case 11: {
-        const v = prompt('Username to kick:'); if(v) await fetch('/room-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ roomId, action:'kick', target: v })}); break;
-      }
+    if (Number.isNaN(idx) || idx < 1 || idx > options.length) return;
+  
+    switch (idx) {
+      case 1: // Rename
+        const name = prompt('New name:', r.name);
+        if (name) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'setName', value:name.trim()})});
+        break;
+  
+      case 2: // Description
+        const desc = prompt('Description:', r.description || '');
+        if (desc !== null) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'setDescription', value:desc})});
+        break;
+  
+      case 3: // Privacy
+        const privacy = prompt('Privacy (public / friends / invite):', r.inviteOnly ? (r.inviteOnly === 'friends' ? 'friends' : 'invite') : 'public') || 'public';
+        await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'setPrivacy', value:privacy})});
+        break;
+  
+      case 4: // Posting permission
+        const canPost = prompt('Who can post? (any / friends / owner):', r.canPost || 'any');
+        if (canPost) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'setCanPost', value:canPost})});
+        break;
+  
+      case 5: // PFP URL
+        const url = prompt('PFP URL:');
+        if (url) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'setPfp', value:url})});
+        break;
+  
+      case 6: // Upload PFP
+        const input = document.createElement('input'); 
+        input.type = 'file'; input.accept = 'image/*';
+        input.onchange = async () => {
+          if (!input.files[0]) return;
+          const fd = new FormData();
+          fd.append('pfp', input.files[0]);
+          fd.append('roomId', roomId);
+          const res = await fetch('/update-room-pfp', { method:'POST', body: fd });
+          const j = await res.json();
+          alert(j.success ? 'PFP updated!' : j.message || 'Failed');
+          loadRooms();
+        };
+        input.click();
+        return;
+  
+      case 7: // Invite user
+        const target = prompt('Username to invite:');
+        if (target) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'invite', target})});
+        break;
+  
+      case 8: // Ban user
+        const banTarget = prompt('Username to ban:');
+        if (banTarget) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'ban', target:banTarget})});
+        break;
+  
+      case 9: // Unban user
+        const unbanTarget = prompt('Username to unban:');
+        if (unbanTarget) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'unban', target:unbanTarget})});
+        break;
+  
+      case 10: // Kick user
+        const kickTarget = prompt('Username to kick:');
+        if (kickTarget) await fetch('/room-action', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId, action:'kick', target:kickTarget})});
+        break;
     }
-    await loadRooms();
+  
+    // Refresh room list after any change
+    setTimeout(loadRooms, 300);
   }
-
   // ---------- DMs ----------
   async function loadDMList(){
     const data = await api('/friends'); if(!data) return;
