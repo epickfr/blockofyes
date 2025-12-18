@@ -4,23 +4,224 @@
 <meta charset="utf-8">
 <title>Login - Epick Chat</title>
 <style>
-  body{font-family:Arial;background:#0f1114;color:#e8eefc;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
-  .box{background:rgba(255,255,255,0.03);padding:20px;border-radius:8px;width:320px;}
-  input{width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#fff;}
-  button{width:100%;padding:10px;border-radius:6px;background:#6b8cff;border:none;color:#05102a;cursor:pointer;}
-  .muted{color:#aab4d6;font-size:13px;text-align:center;margin-top:8px}
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background:rgb(34, 30, 44);
+    color: #e8eefc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* Added animated space background with stars and nebula */
+  .space-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(ellipse at top, #1a0b2e 0%, #0a0514 50%, #000000 100%);
+    z-index: 0;
+  }
+  
+  .stars {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle 3s infinite;
+  }
+  
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+  
+  .nebula {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 20% 30%, rgba(138, 43, 226, 0.15) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(75, 0, 130, 0.12) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(167, 139, 250, 0.08) 0%, transparent 60%);
+    animation: nebulaPulse 10s ease-in-out infinite;
+  }
+  
+  @keyframes nebulaPulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+  }
+  
+  .shooting-star {
+    position: absolute;
+    height: 2px;
+    background: linear-gradient(90deg, #fff, transparent);
+    animation: shoot 3s linear infinite;
+  }
+  
+  @keyframes shoot {
+    0% {
+      transform: translateX(0) translateY(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(-500px) translateY(300px);
+      opacity: 0;
+    }
+  }
+  
+  .box {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 40px;
+    border-radius: 24px;
+    width: 400px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 80px rgba(167, 139, 250, 0.1);
+    position: relative;
+    z-index: 1;
+  }
+  
+  h3 {
+    margin: 0 0 24px 0;
+    font-size: 28px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #fff 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  input {
+    width: 100%;
+    padding: 14px 16px;
+    margin: 12px 0;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+  }
+  
+  input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+  }
+  
+  input:focus {
+    outline: none;
+    border-color: rgba(167, 139, 250, 0.5);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 20px rgba(167, 139, 250, 0.2);
+  }
+  
+  button {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(167, 139, 250, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    color: #fff;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+  }
+  
+  button:hover {
+    background: rgba(167, 139, 250, 1);
+    box-shadow: 0 0 30px rgba(167, 139, 250, 0.4);
+    transform: translateY(-2px);
+  }
+  
+  button:active {
+    transform: translateY(0);
+  }
+  
+  #signupBtn {
+    margin-top: 12px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+  }
+  
+  #signupBtn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(167, 139, 250, 0.5);
+    box-shadow: 0 0 20px rgba(167, 139, 250, 0.2);
+  }
+  
+  .muted {
+    color: #aab4d6;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 16px;
+  }
 </style>
 </head>
 <body>
+  <!-- Added space background elements -->
+  <div class="space-bg"></div>
+  <div class="nebula"></div>
+  <div class="stars" id="stars"></div>
+  
   <div class="box">
-    <h3 style="margin:0 0 8px 0">Epick Chat</h3>
+    <h3>Epick Chat</h3>
     <input id="username" placeholder="username">
     <input id="password" placeholder="password" type="password">
     <button id="loginBtn">Login</button>
-    <button id="signupBtn" style="margin-top:8px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:#fff">Sign up</button>
+    <button id="signupBtn">Sign up</button>
   </div>
 
 <script>
+function createStars() {
+  const starsContainer = document.getElementById('stars');
+  
+  for (let i = 0; i < 100; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.width = star.style.height = (Math.random() * 2 + 1) + 'px';
+    star.style.animationDelay = Math.random() * 3 + 's';
+    star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+    starsContainer.appendChild(star);
+  }
+  
+  setInterval(() => {
+    const shootingStar = document.createElement('div');
+    shootingStar.className = 'shooting-star';
+    shootingStar.style.left = Math.random() * 100 + '%';
+    shootingStar.style.top = Math.random() * 50 + '%';
+    shootingStar.style.width = (Math.random() * 100 + 50) + 'px';
+    starsContainer.appendChild(shootingStar);
+    
+    setTimeout(() => shootingStar.remove(), 3000);
+  }, 5000);
+}
+
+createStars();
+
 document.getElementById('loginBtn').onclick = async () => {
   const u = document.getElementById('username').value.trim();
   const p = document.getElementById('password').value;
@@ -30,11 +231,11 @@ document.getElementById('loginBtn').onclick = async () => {
   if(j.success) location.href = '/';
   else alert(j.message || 'Login failed');
 };
+
 document.getElementById('signupBtn').onclick = async () => {
-  const u = prompt('Choose a username');
-  if(!u) return;
-  const p = prompt('Choose a password');
-  if(!p) return;
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value;
+  if(!u||!p) return alert('fill both');
   const res = await fetch('/signup', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: u, password: p })});
   const j = await res.json();
   if(j.success) location.href = '/';
