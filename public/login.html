@@ -67,23 +67,9 @@
     50% { opacity: 1; }
   }
   
-  .shooting-star {
-    position: absolute;
-    height: 2px;
-    background: linear-gradient(90deg, #fff, transparent);
-    animation: shoot 3s linear infinite;
-  }
+
   
-  @keyframes shoot {
-    0% {
-      transform: translateX(0) translateY(0);
-      opacity: 1;
-    }
-    100% {
-      transform: translateX(-500px) translateY(300px);
-      opacity: 0;
-    }
-  }
+
   
   .box {
     background: rgba(255, 255, 255, 0.05);
@@ -209,14 +195,7 @@ function createStars() {
   }
   
   setInterval(() => {
-    const shootingStar = document.createElement('div');
-    shootingStar.className = 'shooting-star';
-    shootingStar.style.left = Math.random() * 100 + '%';
-    shootingStar.style.top = Math.random() * 50 + '%';
-    shootingStar.style.width = (Math.random() * 100 + 50) + 'px';
-    starsContainer.appendChild(shootingStar);
-    
-    setTimeout(() => shootingStar.remove(), 3000);
+
   }, 5000);
 }
 
