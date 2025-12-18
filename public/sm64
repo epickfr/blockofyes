@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embedded Super Mario 64</title>
+    <style>
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        iframe {
+            width: 90vw;          /* Responsive width */
+            height: 90vh;         /* Responsive height */
+            max-width: 1024px;    /* Optional max size */
+            max-height: 768px;
+            border: none;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+        h1 { position: absolute; top: 10px; color: white; text-align: center; width: 100%; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <h1>Super Mario 64 (Browser Port)</h1>
+    <iframe src="https://supermario-64.github.io/" 
+            allowfullscreen 
+            frameborder="0"
+            scrolling="no">
+    </iframe>
+</body>
+</html>
